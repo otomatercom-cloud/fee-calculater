@@ -1,14 +1,14 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { demoCalculate, demoChart, demoOptions } from "./demo";
+import { demoAdminList, demoCalculate, demoChart, demoOptions } from "./demo";
 
 export const COOKIE = "fee_session";
 export const DEMO = process.env.FEE_DEMO === "1";
 const ODOO_URL = (process.env.ODOO_URL || "").replace(/\/+$/, "");
 const ODOO_DB = process.env.ODOO_DB || "";
 
-const ACTIONS = new Set(["me", "options", "calculate", "chart"]);
+const ACTIONS = new Set(["me", "options", "calculate", "chart", "admin_list", "admin_save"]);
 
 export function sessionCookieOptions() {
   return { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 12 };
@@ -55,9 +55,11 @@ export async function handleAction(action: string, req: Request) {
     if (action === "me") out = { status: 200, data: { ok: true, name: "Demo Counsellor", is_manager: true } };
     else if (action === "options") out = { status: 200, data: demoOptions() as unknown as Record<string, unknown> };
     else if (action === "chart") out = { status: 200, data: { ok: true, rows: demoChart() } };
+    else if (action === "admin_list") out = { status: 200, data: demoAdminList() };
+    else if (action === "admin_save") out = { status: 400, data: { ok: false, error: "Demo mode is read-only. Connect Odoo to add or edit fees." } };
     else out = demoCalculate(body);
   } else {
-    out = await odooPost(`/otm_fee/api/${action}`, body, sid);
+    out = await odooPost(`/otm_fee/api/${action.startsWith("admin_") ? "admin/" + action.slice(6) : action}`, body, sid);
   }
   const res = NextResponse.json(out.data, { status: out.status });
   if (out.status === 401) res.cookies.delete(COOKIE);

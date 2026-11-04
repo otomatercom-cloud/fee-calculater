@@ -75,3 +75,19 @@ export function demoCalculate(body: Record<string, unknown>): { status: number; 
   };
   return { status: 200, data: { ok: true, result } };
 }
+
+export function demoAdminList() {
+  const structures = STRUCTURES.map((s) => {
+    const sub = s.a + s.mt + s.f;
+    return { id: s.id, course_id: s.c, course: COURSES[s.c], course_type_id: s.t, course_type: TYPES[s.t], mode: s.m,
+      admission_fee: s.a, material_fee: s.mt, course_fee: s.f, gst_percent: GST, onetime_discount_percent: s.ot,
+      total: r2(sub + (sub * GST) / 100), active: true };
+  });
+  return {
+    ok: true,
+    courses: Object.entries(COURSES).map(([id, name]) => ({ id: Number(id), name, sequence: 10, active: true })),
+    types: Object.entries(TYPES).map(([id, name]) => ({ id: Number(id), name, sequence: 10, active: true })),
+    structures,
+    scholarships: SCHOLARSHIPS.map((s) => ({ ...s, note: "", sequence: 10, active: true })),
+  };
+}
