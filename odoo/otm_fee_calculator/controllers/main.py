@@ -105,18 +105,7 @@ class OtmFeeCalculatorApi(http.Controller):
         for course in sorted(courses.values(), key=lambda c: c["name"].lower()):
             course["types"] = sorted(course["types"].values(), key=lambda t: t["name"].lower())
             course_list.append(course)
-        scholarships = [
-            {
-                "id": sc.id,
-                "name": sc.name,
-                "kind": sc.kind,
-                "percentage": sc.percentage,
-                "apply_on": sc.apply_on,
-                "course_ids": sc.course_ids.ids,
-            }
-            for sc in request.env["otm.fee.scholarship"].search([])
-        ]
-        return _json({"ok": True, "courses": course_list, "scholarships": scholarships})
+        return _json({"ok": True, "courses": course_list})
 
     @http.route("/otm_fee/api/calculate", type="http", auth="public", methods=["POST"], csrf=False)
     def calculate(self, **kw):
@@ -134,32 +123,32 @@ class OtmFeeCalculatorApi(http.Controller):
         )
         if not structure:
             return _json({"ok": False, "error": "No fee structure is set for this selection."}, 404)
-        scholarship = request.env["otm.fee.scholarship"]
-        scholarship_id = _to_int(data.get("scholarship_id"))
-        if scholarship_id:
-            scholarship = scholarship.search([("id", "=", scholarship_id)], limit=1)
-            if scholarship and scholarship.course_ids and structure.course_id not in scholarship.course_ids:
-                return _json({"ok": False, "error": "This scholarship is not available for the selected course."}, 400)
-        return _json({"ok": True, "result": structure.calculate(scholarship or None)})
+        return _json({"ok": True, "result": structure.calculate()})
 
     @http.route("/otm_fee/api/chart", type="http", auth="public", methods=["POST"], csrf=False)
     def chart(self, **kw):
         err = _guard()
         if err:
             return err
-        rows = [
-            {
+        rows = []
+        for s in request.env["otm.fee.structure"].search([]):
+            c = s.calculate()
+            rows.append({
                 "id": s.id,
-                "course": s.course_id.name,
-                "course_type": s.course_type_id.name,
-                "mode": s.mode,
-                "admission": s.admission_fee,
-                "material": s.material_fee,
-                "course_fee": s.course_fee,
-                "gst_percent": s.gst_percent,
-                "gst_amount": s.gst_amount,
-                "total": s.total_fee,
-            }
-            for s in request.env["otm.fee.structure"].search([])
-        ]
+                "course": c["course"],
+                "course_type": c["course_type"],
+                "mode": c["mode"],
+                "admission": c["admission"]["total"],
+                "course_fee": c["course_fee"]["amount"],
+                "course_incl": c["course_fee"]["total"],
+                "addon": c["addon"]["total"],
+                "total_with_addon": c["total_with_addon"],
+                "discount_type": c["discount"]["type"],
+                "discount_percent": c["discount"]["percentage"],
+                "discount_amount": c["discount"]["amount"],
+                "discounted_fee": c["discount"]["discounted_fee"],
+                "final": c["final"],
+                "one_time_percent": c["one_time"]["percentage"],
+                "one_time_final": c["one_time"]["final"],
+            })
         return _json({"ok": True, "rows": rows})

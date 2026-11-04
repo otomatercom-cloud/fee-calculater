@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logic All Courses Fee Structure 2026. Loaded once (noupdate) - edit later from Fee Calculator > Fee Structures. -->
+<odoo noupdate="1">
+    <record id="type_ca" model="otm.fee.course.type"><field name="name">CA</field></record>
+    <record id="type_cma" model="otm.fee.course.type"><field name="name">CMA</field></record>
+    <record id="type_acca" model="otm.fee.course.type"><field name="name">ACCA</field></record>
+    <record id="type_ciap" model="otm.fee.course.type"><field name="name">CIAP</field></record>
+    <record id="course_ca_foundation" model="otm.fee.course"><field name="name">CA Foundation</field></record>
+    <record id="course_ca_f_plus_two" model="otm.fee.course"><field name="name">CA Foundation Plus Two</field></record>
+    <record id="course_ca_f_plus_one" model="otm.fee.course"><field name="name">CA Foundation Plus One</field></record>
+    <record id="course_ca_inter" model="otm.fee.course"><field name="name">CA Inter</field></record>
+    <record id="course_ca_fdn_inter" model="otm.fee.course"><field name="name">CA FDN + Inter</field></record>
+    <record id="course_cma_cat_inter" model="otm.fee.course"><field name="name">CMA CAT + Inter</field></record>
+    <record id="course_cma_inter" model="otm.fee.course"><field name="name">CMA Inter</field></record>
+    <record id="course_cma_usa" model="otm.fee.course"><field name="name">CMA USA</field></record>
+    <record id="course_bcom_acca" model="otm.fee.course"><field name="name">BCOM + ACCA</field></record>
+    <record id="course_mba_acca" model="otm.fee.course"><field name="name">MBA + ACCA</field></record>
+    <record id="course_ciap" model="otm.fee.course"><field name="name">CIAP</field></record>
+    <record id="structure_1" model="otm.fee.structure">
+        <field name="course_id" ref="course_ca_foundation"/><field name="course_type_id" ref="type_ca"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">55000</field><field name="material_fee">5000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">10</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_2" model="otm.fee.structure">
+        <field name="course_id" ref="course_ca_f_plus_two"/><field name="course_type_id" ref="type_ca"/><field name="mode">online</field>
+        <field name="admission_fee">5000</field><field name="course_fee">49500</field><field name="material_fee">0</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">49.4</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_3" model="otm.fee.structure">
+        <field name="course_id" ref="course_ca_f_plus_one"/><field name="course_type_id" ref="type_ca"/><field name="mode">online</field>
+        <field name="admission_fee">5000</field><field name="course_fee">59500</field><field name="material_fee">0</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">41.17</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_4" model="otm.fee.structure">
+        <field name="course_id" ref="course_ca_inter"/><field name="course_type_id" ref="type_ca"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">90000</field><field name="material_fee">5000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">10</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_5" model="otm.fee.structure">
+        <field name="course_id" ref="course_ca_fdn_inter"/><field name="course_type_id" ref="type_ca"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">120000</field><field name="material_fee">5000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">10</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_6" model="otm.fee.structure">
+        <field name="course_id" ref="course_cma_cat_inter"/><field name="course_type_id" ref="type_cma"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">90000</field><field name="material_fee">5000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">10</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_7" model="otm.fee.structure">
+        <field name="course_id" ref="course_cma_inter"/><field name="course_type_id" ref="type_cma"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">80000</field><field name="material_fee">5000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">10</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_8" model="otm.fee.structure">
+        <field name="course_id" ref="course_cma_usa"/><field name="course_type_id" ref="type_cma"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">95000</field><field name="material_fee">7000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">10</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_9" model="otm.fee.structure">
+        <field name="course_id" ref="course_cma_usa"/><field name="course_type_id" ref="type_cma"/><field name="mode">online</field>
+        <field name="admission_fee">5000</field><field name="course_fee">70000</field><field name="material_fee">0</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">0</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_10" model="otm.fee.structure">
+        <field name="course_id" ref="course_bcom_acca"/><field name="course_type_id" ref="type_acca"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">120000</field><field name="material_fee">10000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">25</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_11" model="otm.fee.structure">
+        <field name="course_id" ref="course_mba_acca"/><field name="course_type_id" ref="type_acca"/><field name="mode">online</field>
+        <field name="admission_fee">5000</field><field name="course_fee">75000</field><field name="material_fee">0</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">0</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_12" model="otm.fee.structure">
+        <field name="course_id" ref="course_ciap"/><field name="course_type_id" ref="type_ciap"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="course_fee">102542.37</field><field name="material_fee">5000</field>
+        <field name="gst_percent">18</field><field name="discount_type">scholarship</field><field name="discount_percent">0</field>
+        <field name="onetime_discount_percent">5</field>
+    </record>
+</odoo>

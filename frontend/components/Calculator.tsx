@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { modeLabel, money, pct } from "@/lib/format";
 import type { Calculation, Mode, Options } from "@/lib/types";
@@ -10,7 +10,6 @@ export default function Calculator() {
   const [courseId, setCourseId] = useState("");
   const [typeId, setTypeId] = useState("");
   const [mode, setMode] = useState<Mode | "">("");
-  const [scholarshipId, setScholarshipId] = useState("");
   const [result, setResult] = useState<Calculation | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -22,14 +21,14 @@ export default function Calculator() {
 
   const course = opts?.courses.find((c) => String(c.id) === courseId);
   const ctype = course?.types.find((t) => String(t.id) === typeId);
-  const scholarships = useMemo(
-    () => (opts?.scholarships || []).filter((s) => !s.course_ids.length || (course && s.course_ids.includes(course.id))),
-    [opts, course]
-  );
-  const chosen = scholarships.find((s) => String(s.id) === scholarshipId);
-
   function pickCourse(v: string) {
-    setCourseId(v); setTypeId(""); setMode(""); setScholarshipId(""); setResult(null); setError("");
+    setResult(null); setError(""); setCourseId(v); setMode("");
+    const c = opts?.courses.find((x) => String(x.id) === v);
+    // auto-select when there is only one choice
+    if (c && c.types.length === 1) {
+      setTypeId(String(c.types[0].id));
+      if (c.types[0].modes.length === 1) setMode(c.types[0].modes[0]);
+    } else setTypeId("");
   }
   function pickType(v: string) {
     setTypeId(v); setMode(""); setResult(null); setError("");
@@ -37,12 +36,12 @@ export default function Calculator() {
     if (t && t.modes.length === 1) setMode(t.modes[0]);
   }
 
-  async function run(schId: string) {
+  async function run() {
     if (!courseId || !typeId || !mode) return;
     setBusy(true); setError("");
     try {
       const d = await api<{ result: Calculation }>("/api/fee/calculate", {
-        course_id: Number(courseId), course_type_id: Number(typeId), mode, scholarship_id: schId ? Number(schId) : null,
+        course_id: Number(courseId), course_type_id: Number(typeId), mode,
       });
       setResult(d.result);
     } catch (e) {
@@ -52,11 +51,6 @@ export default function Calculator() {
     }
   }
 
-  function pickScholarship(v: string) {
-    setScholarshipId(v);
-    if (result) void run(v);
-  }
-
   function reset() {
     pickCourse("");
   }
@@ -64,18 +58,17 @@ export default function Calculator() {
   function summary(r: Calculation) {
     const lines = [
       `*Fee details – ${r.course} (${r.course_type}, ${modeLabel(r.mode)})*`,
-      `Admission Fee: ${money(r.fees.admission)}`,
-      `Material Fee: ${money(r.fees.material)}`,
-      `Amount: ${money(r.fees.course)}`,
-      `GST (${pct(r.gst_percent)}): ${money(r.standard.gst)}`,
-      `*Total: ${money(r.standard.total)}*`,
+      `Admission Fee (incl. GST): ${money(r.admission.total)}`,
+      `Course Fee: ${money(r.course_fee.amount)} + GST ${pct(r.gst_percent)} = ${money(r.course_fee.total)}`,
     ];
-    if (r.scholarship) {
-      lines.push("", `${r.scholarship.name} (${pct(r.scholarship.percentage)}): -${money(r.scholarship.discount)}`,
-        `*Payable after ${r.scholarship.kind}: ${money(r.after_scholarship.total)}*`);
+    if (r.addon.total) lines.push(`Add-on / Material Fee (incl. GST): ${money(r.addon.total)}`);
+    lines.push(`*Total: ${money(r.total_with_addon)}*`);
+    if (r.discount.percentage > 0) {
+      lines.push("", `${r.discount.type === "discount" ? "Discount" : "Scholarship"} ${pct(r.discount.percentage)}: -${money(r.discount.amount)}`,
+        `*Final course fee${r.addon.total ? " + add-on" : ""}: ${money(r.final)}*`);
     }
     if (r.one_time.percentage > 0) {
-      lines.push("", `*One-time payment: ${money(r.one_time.total)}* (extra ${pct(r.one_time.percentage)} off course fee, you save ${money(r.one_time.saving)})`);
+      lines.push("", `*Lump sum payment: ${money(r.one_time.final)}* (extra ${pct(r.one_time.percentage)} off, you save ${money(r.one_time.saving)})`);
     }
     return lines.join("\n");
   }
@@ -131,7 +124,7 @@ export default function Calculator() {
             </div>
           </div>
           <div className="row-btns">
-            <button className="btn primary grow" disabled={!courseId || !typeId || !mode || busy} onClick={() => run(scholarshipId)}>
+            <button className="btn primary grow" disabled={!courseId || !typeId || !mode || busy} onClick={run}>
               {busy ? "Calculating…" : "Calculate Fee"}
             </button>
             <button className="btn ghost" onClick={reset} type="button">Reset</button>
@@ -149,13 +142,14 @@ export default function Calculator() {
                 <span className={`chip ${result.mode}`}>{modeLabel(result.mode)}</span>
               </div>
               <dl className="lines">
-                <div><dt>Admission Fee</dt><dd>{money(result.fees.admission)}</dd></div>
-                <div><dt>Material Fee</dt><dd>{money(result.fees.material)}</dd></div>
-                <div><dt>Amount (Course Fee)</dt><dd>{money(result.fees.course)}</dd></div>
-                <div className="sub"><dt>Fee before GST</dt><dd>{money(result.fees.subtotal)}</dd></div>
-                <div><dt>GST ({pct(result.gst_percent)})</dt><dd>{money(result.standard.gst)}</dd></div>
-                <div className="total"><dt>Total</dt><dd>{money(result.standard.total)}</dd></div>
+                <div><dt>Admission Fee (incl. GST)</dt><dd>{money(result.admission.total)}</dd></div>
+                <div><dt>Course Fee / Amount</dt><dd>{money(result.course_fee.amount)}</dd></div>
+                <div><dt>GST ({pct(result.gst_percent)})</dt><dd>{money(result.course_fee.gst)}</dd></div>
+                <div className="sub"><dt>Course Fee incl. GST</dt><dd>{money(result.course_fee.total)}</dd></div>
+                {result.addon.total > 0 && <div><dt>Material / Add-on Fee (incl. GST)</dt><dd>{money(result.addon.total)}</dd></div>}
+                <div className="total"><dt>Total (incl. tax)</dt><dd>{money(result.total_with_addon)}</dd></div>
               </dl>
+              <p className="muted note">Admission fee is paid separately and is not included in the total.</p>
             </>
           )}
         </section>
@@ -164,46 +158,34 @@ export default function Calculator() {
           <>
             <section className="card">
               <h3><span className="step">3</span> Scholarship / Discount</h3>
-              <label>Select Scholarship or Discount
-                <select value={scholarshipId} onChange={(e) => pickScholarship(e.target.value)} disabled={busy}>
-                  <option value="">None</option>
-                  {scholarships.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </label>
-              {result.scholarship && chosen ? (
+              {result.discount.percentage > 0 ? (
                 <>
                   <div className="info-grid">
-                    <div><small>Type</small><b className="cap">{result.scholarship.kind}</b></div>
-                    <div><small>Percentage</small><b>{pct(result.scholarship.percentage)}</b></div>
-                    <div><small>Applied on</small><b>{result.scholarship.apply_on === "course_fee" ? "Course fee" : "Total fee"}</b></div>
-                    <div><small>Discount</small><b className="good">−{money(result.scholarship.discount)}</b></div>
+                    <div><small>Type</small><b className="cap">{result.discount.type}</b></div>
+                    <div><small>Percentage</small><b>{pct(result.discount.percentage)}</b></div>
+                    <div><small>Discount</small><b className="good">−{money(result.discount.amount)}</b></div>
+                    <div><small>Course fee after discount</small><b>{money(result.discount.discounted_fee)}</b></div>
                   </div>
                   <dl className="lines">
-                    <div><dt>Fee after discount</dt><dd>{money(result.after_scholarship.taxable)}</dd></div>
-                    <div><dt>GST ({pct(result.gst_percent)})</dt><dd>{money(result.after_scholarship.gst)}</dd></div>
-                    <div className="total"><dt>Payable</dt><dd>{money(result.after_scholarship.total)}</dd></div>
+                    {result.addon.total > 0 && <div><dt>Add-on fee (no discount)</dt><dd>{money(result.addon.total)}</dd></div>}
+                    <div className="total"><dt>Final course fee{result.addon.total > 0 ? " + add-on" : ""}</dt><dd>{money(result.final)}</dd></div>
                   </dl>
                 </>
               ) : (
-                <p className="muted">{scholarships.length ? "Choose one to see the discount." : "No scholarship available for this course."}</p>
+                <p className="muted">No scholarship or discount is available for this course.</p>
               )}
             </section>
 
             <section className="card onetime">
-              <h3><span className="step">4</span> One-time Payment</h3>
+              <h3><span className="step">4</span> One-time (Lump Sum) Payment</h3>
               {result.one_time.percentage > 0 ? (
                 <>
-                  <p className="muted">Pay the full fee in one go and get an extra {pct(result.one_time.percentage)} off the course fee.</p>
-                  <div className="big">{money(result.one_time.total)}</div>
-                  <dl className="lines">
-                    <div><dt>Extra discount</dt><dd className="good">−{money(result.one_time.discount)}</dd></div>
-                    <div><dt>Fee after discount</dt><dd>{money(result.one_time.taxable)}</dd></div>
-                    <div><dt>GST ({pct(result.gst_percent)})</dt><dd>{money(result.one_time.gst)}</dd></div>
-                  </dl>
-                  <div className="save">You save {money(result.one_time.saving)}{result.scholarship ? " on top of the scholarship" : ""}</div>
+                  <p className="muted">Pay the full fee in one go and get an extra {pct(result.one_time.percentage)} off the {result.discount.percentage > 0 ? "discounted " : ""}course fee.</p>
+                  <div className="big">{money(result.one_time.final)}</div>
+                  <div className="save">You save {money(result.one_time.saving)}{result.addon.total > 0 ? " (add-on fee included in the amount)" : ""}</div>
                 </>
               ) : (
-                <p className="muted">No one-time payment offer is set for this course.</p>
+                <p className="muted">No lump sum offer is set for this course.</p>
               )}
             </section>
 

@@ -4,8 +4,6 @@
               groups="group_fee_user"/>
     <menuitem id="menu_otm_fee_structure" name="Fee Structures" parent="menu_otm_fee_root"
               action="action_otm_fee_structure" sequence="10"/>
-    <menuitem id="menu_otm_fee_scholarship" name="Scholarships &amp; Discounts" parent="menu_otm_fee_root"
-              action="action_otm_fee_scholarship" sequence="20"/>
     <menuitem id="menu_otm_fee_config" name="Configuration" parent="menu_otm_fee_root" sequence="90"
               groups="group_fee_manager"/>
     <menuitem id="menu_otm_fee_course" name="Courses" parent="menu_otm_fee_config"

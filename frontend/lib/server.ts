@@ -55,7 +55,7 @@ export async function handleAction(action: string, req: Request) {
     if (action === "me") out = { status: 200, data: { ok: true, name: "Demo Counsellor", is_manager: true } };
     else if (action === "options") out = { status: 200, data: demoOptions() as unknown as Record<string, unknown> };
     else if (action === "chart") out = { status: 200, data: { ok: true, rows: demoChart() } };
-    else if (action === "admin_list") out = { status: 200, data: demoAdminList() };
+    else if (action === "admin_list") out = { status: 200, data: demoAdminList() as unknown as Record<string, unknown> };
     else if (action === "admin_save") out = { status: 400, data: { ok: false, error: "Demo mode is read-only. Connect Odoo to add or edit fees." } };
     else out = demoCalculate(body);
   } else {

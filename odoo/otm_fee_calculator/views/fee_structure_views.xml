@@ -9,9 +9,10 @@
                 <field name="course_type_id"/>
                 <field name="mode"/>
                 <field name="admission_fee"/>
-                <field name="material_fee"/>
                 <field name="course_fee"/>
+                <field name="material_fee"/>
                 <field name="gst_percent"/>
+                <field name="discount_percent"/>
                 <field name="total_fee"/>
                 <field name="onetime_discount_percent"/>
             </list>
@@ -32,21 +33,24 @@
                         </group>
                         <group name="selection_right">
                             <field name="active"/>
-                            <field name="onetime_discount_percent"/>
                         </group>
                     </group>
                     <group name="fees">
-                        <group name="fees_left" string="Fees">
+                        <group name="fees_left" string="Fees (enter excluding GST)">
                             <field name="admission_fee"/>
-                            <field name="material_fee"/>
                             <field name="course_fee"/>
+                            <field name="material_fee"/>
                             <field name="gst_percent"/>
                         </group>
-                        <group name="fees_right" string="Total (without scholarship)">
-                            <field name="subtotal"/>
-                            <field name="gst_amount"/>
-                            <field name="total_fee"/>
+                        <group name="fees_right" string="Scholarship / Lump Sum">
+                            <field name="discount_type"/>
+                            <field name="discount_percent"/>
+                            <field name="onetime_discount_percent"/>
                         </group>
+                    </group>
+                    <group name="calculated" string="Calculated">
+                        <field name="course_fee_incl"/>
+                        <field name="total_fee"/>
                     </group>
                 </sheet>
             </form>

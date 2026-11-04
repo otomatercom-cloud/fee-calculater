@@ -5,5 +5,3 @@ access_otm_fee_course_user,otm.fee.course user,model_otm_fee_course,group_fee_us
 access_otm_fee_course_manager,otm.fee.course manager,model_otm_fee_course,group_fee_manager,1,1,1,1
 access_otm_fee_structure_user,otm.fee.structure user,model_otm_fee_structure,group_fee_user,1,0,0,0
 access_otm_fee_structure_manager,otm.fee.structure manager,model_otm_fee_structure,group_fee_manager,1,1,1,1
-access_otm_fee_scholarship_user,otm.fee.scholarship user,model_otm_fee_scholarship,group_fee_user,1,0,0,0
-access_otm_fee_scholarship_manager,otm.fee.scholarship manager,model_otm_fee_scholarship,group_fee_manager,1,1,1,1
