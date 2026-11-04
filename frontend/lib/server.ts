@@ -28,9 +28,14 @@ export async function odooPost(path: string, body: unknown, sid?: string) {
     try {
       return { status: res.status, data: JSON.parse(text) as Record<string, unknown> };
     } catch {
-      // HTML back from Odoo = redirect to /web/login (expired session) or a proxy error page
-      const expired = res.status >= 300 && res.status < 400;
-      return { status: expired ? 401 : 502, data: { ok: false, code: expired ? "session" : "bad_gateway", error: expired ? "Session expired. Please sign in again." : "Odoo returned an unexpected response." } };
+      // Not JSON: redirect to /web/login (expired session), 404 (module not installed / wrong DB), or a proxy error page
+      console.error(`[odoo] ${path} -> HTTP ${res.status}: ${text.slice(0, 200).replace(/\s+/g, " ")}`);
+      if (res.status >= 300 && res.status < 400)
+        return { status: 401, data: { ok: false, code: "session", error: "Session expired. Please sign in again." } };
+      const hint = res.status === 404
+        ? "Route not found - install/upgrade the otm_fee_calculator module on this Odoo, and check ODOO_DB."
+        : "Check ODOO_URL / ODOO_DB and the server log.";
+      return { status: 502, data: { ok: false, code: "bad_gateway", error: `Odoo returned HTTP ${res.status}. ${hint}` } };
     }
   } catch {
     return { status: 502, data: { ok: false, error: "Cannot reach the Odoo server." } as Record<string, unknown> };
