@@ -22,7 +22,6 @@ discounted course fee (add-on not reduced). Admission fee (incl. GST) is shown s
 * Odoo -> Fee Calculator -> Configuration -> **Currency Rates** (Current rate + Logic rate per currency; USD/GBP created with rates blank - enter real rates) and **Exam / Registration Fees** (per course: name, currency, amount, convert using Current or Logic rate). These are shown separately and are NOT added to the course total.
 * Upgrade: replace the module folder, restart Odoo, Apps -> Upgrade. Old "material" values move to Add-on automatically.
 
-## Dollar rates
-* **Market rate** = common rate, auto-fetched daily by an Odoo scheduled action (open.er-api.com, no key; the Odoo server needs internet). "Fetch Now" in Odoo or "Fetch live rate" in Manage Fees -> Currency Rates fetches instantly. Untick *Auto-fetch* to enter it by hand.
-* **Logic rate** = Logic's special rate, always entered by the admin.
-* The calculator shows both amounts for every exam/registration fee.
+## Dollar rates and Logic discount
+* **Currency Rates** hold only the market (common) rate, auto-fetched daily (open.er-api.com; the Odoo server needs internet). "Fetch Now" / "Fetch live rate" fetches instantly.
+* **Exam / Registration Fees**: per fee enter the foreign amount and Logic's **discount %** (or, optionally, a fixed Logic special rate which is used instead of the %). The calculator shows market amount, Logic price and the saving. If neither is set, only the amount is shown.

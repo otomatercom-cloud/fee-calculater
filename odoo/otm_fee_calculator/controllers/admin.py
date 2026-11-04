@@ -43,6 +43,8 @@ FIELDS = {
         "course_id": ("m2o", "otm.fee.course"),
         "currency_id": ("m2o", "otm.fee.currency"),
         "amount": ("float", None),
+        "logic_discount_percent": ("float", None),
+        "logic_rate": ("float", None),
         "note": ("str", None),
         "sequence": ("int", None),
         "active": ("bool", None),
@@ -51,7 +53,6 @@ FIELDS = {
         "name": ("str", None),
         "symbol": ("str", None),
         "current_rate": ("float", None),
-        "logic_rate": ("float", None),
         "auto_fetch": ("bool", None),
         "sequence": ("int", None),
         "active": ("bool", None),
@@ -144,14 +145,15 @@ class OtmFeeCalculatorAdminApi(http.Controller):
                     "id": e.id, "name": e.name, "course_id": e.course_id.id, "course": e.course_id.name,
                     "currency_id": e.currency_id.id, "currency": e.currency_id.name,
                     "amount": e.amount, "note": e.note or "",
-                    "inr": e._inr("logic"), "inr_current": e._inr("current"), "sequence": e.sequence, "active": e.active,
+                    "inr": e._inr_market(), "logic_inr": e._inr_logic(), "logic_applies": e._logic_applies(),
+                    "logic_discount_percent": e.logic_discount_percent, "logic_rate": e.logic_rate, "sequence": e.sequence, "active": e.active,
                 }
                 for e in _all("extra")
             ],
             "currencies": [
                 {
                     "id": c.id, "name": c.name, "symbol": c.symbol or "", "current_rate": c.current_rate,
-                    "logic_rate": c.logic_rate, "auto_fetch": c.auto_fetch, "rate_source": c.rate_source or "", "sequence": c.sequence, "active": c.active,
+                    "auto_fetch": c.auto_fetch, "rate_source": c.rate_source or "", "sequence": c.sequence, "active": c.active,
                     "rate_updated": fields.Datetime.to_string(c.rate_updated) if c.rate_updated else False,
                 }
                 for c in _all("currency")

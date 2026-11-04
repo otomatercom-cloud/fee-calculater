@@ -94,8 +94,10 @@ export default function Calculator() {
     r.extra_fees.forEach((e, i) => {
       if (!open["x" + i]) return;
       lines.push("", `*${e.name}: ${e.symbol}${e.amount}*`,
-        `Market rate (₹${e.current_rate || "-"}): ${e.current_rate ? money(e.inr_current) : "rate not set"}`,
-        `*Logic rate (₹${e.logic_rate || "-"}): ${e.logic_rate ? money(e.inr_logic) : "rate not set"}*`);
+        ...(e.logic_applies
+          ? [`Market amount (₹${e.current_rate} per ${e.currency}): ${money(e.inr_market)}`,
+             `*Logic price${e.logic_rate ? ` (special rate ₹${e.logic_rate})` : ` (${pct(e.logic_discount_percent)} discount)`}: ${money(e.inr_logic)}* - you save ${money(e.saving)}`]
+          : [`*Amount (₹${e.current_rate} per ${e.currency}): ${e.market_set ? money(e.inr_market) : "rate not set"}*`]));
     });
     return lines.join("\n");
   }
@@ -237,12 +239,16 @@ export default function Calculator() {
                 <h3>{e.name}</h3>
                 <dl className="lines">
                   <div><dt>Fee ({e.currency})</dt><dd>{e.symbol}{e.amount.toLocaleString("en-IN")}</dd></div>
-                  <div><dt>Market rate{e.current_rate ? ` (₹${e.current_rate} per ${e.currency})` : ""}</dt><dd>{e.current_rate ? money(e.inr_current) : "not set"}</dd></div>
-                  <div className="total"><dt>Logic rate{e.logic_rate ? ` (₹${e.logic_rate})` : ""}</dt><dd>{e.logic_rate ? money(e.inr_logic) : "Rate not set"}</dd></div>
+                  {e.logic_applies ? (
+                    <>
+                      <div><dt>Market amount{e.current_rate ? ` (₹${e.current_rate} per ${e.currency})` : ""}</dt><dd>{e.market_set ? money(e.inr_market) : "rate not set"}</dd></div>
+                      <div className="total"><dt>Logic price{e.logic_rate ? ` (special rate ₹${e.logic_rate})` : ` (${pct(e.logic_discount_percent)} discount)`}</dt><dd>{e.inr_logic || e.logic_rate ? money(e.inr_logic) : "Rate not set"}</dd></div>
+                    </>
+                  ) : (
+                    <div className="total"><dt>Amount{e.current_rate ? ` (₹${e.current_rate} per ${e.currency})` : ""}</dt><dd>{e.market_set ? money(e.inr_market) : "Rate not set"}</dd></div>
+                  )}
                 </dl>
-                {e.logic_rate > 0 && e.current_rate > 0 && e.inr_current > e.inr_logic && (
-                  <div className="save">Logic rate saves {money(e.inr_current - e.inr_logic)} compared to the market rate</div>
-                )}
+                {e.logic_applies && e.saving > 0 && <div className="save">Logic saves you {money(e.saving)}</div>}
                 <p className="muted note">
                   Paid separately - not included in the course total.
                   {e.rate_updated ? ` Market rate updated ${e.rate_updated.slice(0, 10)}.` : ""}{e.note ? ` ${e.note}` : ""}

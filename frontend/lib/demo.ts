@@ -27,16 +27,17 @@ const STRUCTURES: S[] = [
   { id: 12, c: 11, t: 4, m: "offline", course: 102542.37, addon: 5000, disc: 0 },
 ];
 // Sample foreign-currency fees (illustrative figures + rates, demo mode only)
-const DEMO_RATES = { USD: { current: 88.5, logic: 90 } };
-const DEMO_EXTRAS: Record<number, { name: string; usd: number }[]> = {
-  8: [{ name: "CMA Registration Fee", usd: 100 }, { name: "Exam Registration Fee", usd: 50 }],
+const DEMO_RATES = { USD: { current: 88.5 } };
+const DEMO_EXTRAS: Record<number, { name: string; usd: number; disc: number }[]> = {
+  8: [{ name: "CMA Registration Fee", usd: 100, disc: 10 }, { name: "Exam Registration Fee", usd: 50, disc: 0 }],
 };
 function demoExtras(course: number): ExtraFee[] {
-  return (DEMO_EXTRAS[course] || []).map((e, i) => ({
-    id: i + 1, name: e.name, currency: "USD", symbol: "$", amount: e.usd,
-    current_rate: DEMO_RATES.USD.current, logic_rate: DEMO_RATES.USD.logic,
-    inr_current: rupee(e.usd * DEMO_RATES.USD.current), inr_logic: rupee(e.usd * DEMO_RATES.USD.logic), rate_updated: false, note: "",
-  }));
+  return (DEMO_EXTRAS[course] || []).map((e, i) => {
+    const market = rupee(e.usd * DEMO_RATES.USD.current), logic = rupee((market * (100 - e.disc)) / 100);
+    return { id: i + 1, name: e.name, currency: "USD", symbol: "$", amount: e.usd, current_rate: DEMO_RATES.USD.current, market_set: true,
+      inr_market: market, logic_applies: e.disc > 0, logic_discount_percent: e.disc, logic_rate: 0, inr_logic: logic, saving: market - logic,
+      rate_updated: false, note: "" };
+  });
 }
 const ADMISSION = 5000, GST = 18, LUMP = 5;
 
@@ -93,8 +94,8 @@ export function demoAdminList(): AdminData {
     })),
     extras: Object.entries(DEMO_EXTRAS).flatMap(([cid, list]) => list.map((e, i) => ({
       id: Number(cid) * 10 + i, name: e.name, course_id: Number(cid), course: COURSES[Number(cid)], currency_id: 1, currency: "USD",
-      amount: e.usd, note: "", inr: rupee(e.usd * DEMO_RATES.USD.logic), inr_current: rupee(e.usd * DEMO_RATES.USD.current), sequence: 10, active: true,
+      amount: e.usd, note: "", inr: rupee(e.usd * DEMO_RATES.USD.current), logic_inr: rupee((rupee(e.usd * DEMO_RATES.USD.current) * (100 - e.disc)) / 100), logic_applies: e.disc > 0, logic_discount_percent: e.disc, logic_rate: 0, sequence: 10, active: true,
     }))),
-    currencies: [{ id: 1, name: "USD", symbol: "$", current_rate: DEMO_RATES.USD.current, logic_rate: DEMO_RATES.USD.logic, auto_fetch: true, rate_source: "", sequence: 1, active: true, rate_updated: false }],
+    currencies: [{ id: 1, name: "USD", symbol: "$", current_rate: DEMO_RATES.USD.current, auto_fetch: true, rate_source: "", sequence: 1, active: true, rate_updated: false }],
   };
 }

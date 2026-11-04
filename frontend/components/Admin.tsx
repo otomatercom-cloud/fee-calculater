@@ -45,13 +45,14 @@ const FIELDS: Record<Tab, FieldDef[]> = {
     { key: "name", label: "Fee Name", type: "text", hint: "e.g. CMA Registration Fee, Exam Registration Fee" },
     { key: "currency_id", label: "Currency", type: "select", options: (d) => d.currencies.filter((c) => c.active).map((c) => ({ value: String(c.id), label: c.name })) },
     { key: "amount", label: "Amount (in that currency)", type: "number" },
+    { key: "logic_discount_percent", label: "Logic Discount (%)", type: "number", hint: "Logic's discount on the market amount. Leave 0 if none." },
+    { key: "logic_rate", label: "Logic Special Rate (₹ per 1, optional)", type: "number", hint: "Only if Logic charges a fixed special rate. Used instead of the discount %." },
     { key: "note", label: "Note (optional)", type: "text" },
   ],
   currency: [
     { key: "name", label: "Currency Code", type: "text", hint: "e.g. USD, GBP" },
     { key: "symbol", label: "Symbol", type: "text" },
     { key: "current_rate", label: "Market Rate (₹ per 1)", type: "number", hint: "Common market rate. Use Fetch live rate in the table, or enter manually." },
-    { key: "logic_rate", label: "Logic Rate (₹ per 1)", type: "number", hint: "Logic's special rate - always entered by hand." },
   ],
 };
 
@@ -59,8 +60,8 @@ const DEFAULTS: Record<Tab, Record<string, Val>> = {
   structure: { course_id: "", course_type_id: "", mode: "offline", admission_fee: 0, course_fee: 0, material_fee: 0, addon_fee: 0, gst_percent: 18, discount_type: "scholarship", discount_percent: 0, onetime_discount_percent: 5 },
   course: { name: "" },
   type: { name: "" },
-  extra: { course_id: "", name: "", currency_id: "", amount: 0, note: "" },
-  currency: { name: "", symbol: "", current_rate: 0, logic_rate: 0 },
+  extra: { course_id: "", name: "", currency_id: "", amount: 0, logic_discount_percent: 0, logic_rate: 0, note: "" },
+  currency: { name: "", symbol: "", current_rate: 0 },
 };
 
 export default function Admin() {
@@ -224,8 +225,8 @@ export default function Admin() {
 
 function head(tab: Tab) {
   if (tab === "structure") return <tr><th>Course</th><th>Type</th><th>Mode</th><th className="num">Admission</th><th className="num">Course Fee</th><th className="num">Add-on</th><th className="num">Material</th><th className="num">GST</th><th className="num">Disc %</th><th className="num">Lump %</th><th className="num">Actions</th></tr>;
-  if (tab === "extra") return <tr><th>Course</th><th>Fee</th><th className="num">Amount</th><th className="num">Market ₹</th><th className="num">Logic ₹</th><th className="num">Actions</th></tr>;
-  if (tab === "currency") return <tr><th>Currency</th><th className="num">Market Rate</th><th className="num">Logic Rate</th><th>Updated</th><th className="num">Actions</th></tr>;
+  if (tab === "extra") return <tr><th>Course</th><th>Fee</th><th className="num">Amount</th><th className="num">Market ₹</th><th className="num">Logic discount</th><th className="num">Logic price ₹</th><th className="num">Actions</th></tr>;
+  if (tab === "currency") return <tr><th>Currency</th><th className="num">Market Rate</th><th>Updated</th><th className="num">Actions</th></tr>;
   return <tr><th>Name</th><th className="num">Actions</th></tr>;
 }
 
@@ -242,13 +243,12 @@ function cells(tab: Tab, r: Row) {
     return (<>
       <td><b>{String(x.course)}</b></td><td>{String(x.name)}</td>
       <td className="num">{String(x.currency)} {Number(x.amount).toLocaleString("en-IN")}</td>
-      <td className="num">{Number(x.inr_current) ? money(Number(x.inr_current)) : "rate not set"}</td><td className="num">{Number(x.inr) ? money(Number(x.inr)) : "rate not set"}</td>
+      <td className="num">{Number(x.inr) ? money(Number(x.inr)) : "rate not set"}</td><td className="num">{Number(x.logic_rate) ? `Rate ₹${Number(x.logic_rate)}` : Number(x.logic_discount_percent) ? pct(Number(x.logic_discount_percent)) : "–"}</td><td className="num">{x.logic_applies ? money(Number(x.logic_inr)) : "–"}</td>
     </>);
   if (tab === "currency")
     return (<>
       <td><b>{String(x.name)}</b> {String(x.symbol)}</td>
       <td className="num">{Number(x.current_rate) ? `₹${Number(x.current_rate)}` : "not set"}</td>
-      <td className="num">{Number(x.logic_rate) ? `₹${Number(x.logic_rate)}` : "not set"}</td>
       <td>{x.rate_updated ? String(x.rate_updated).slice(0, 16) : "–"}<br /><small className="muted">{String(x.rate_source || "")}</small></td>
     </>);
   return <td><b>{String(x.name)}</b></td>;

@@ -46,6 +46,9 @@
                                     <field name="currency_id"/>
                                     <field name="amount"/>
                                     <field name="inr_amount"/>
+                <field name="logic_discount_percent"/>
+                <field name="logic_rate" optional="show"/>
+                <field name="logic_inr_amount"/>
                                     <field name="note"/>
                                 </list>
                             </field>

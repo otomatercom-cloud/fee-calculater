@@ -10,7 +10,6 @@
                 <field name="symbol"/>
                 <field name="auto_fetch"/>
                 <field name="current_rate"/>
-                <field name="logic_rate"/>
                 <field name="rate_updated"/>
                 <field name="rate_source"/>
                 <button name="action_fetch_rate_button" type="object" string="Fetch Now" icon="fa-refresh"/>
