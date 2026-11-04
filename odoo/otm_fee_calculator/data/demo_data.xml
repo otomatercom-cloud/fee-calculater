@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="type_regular" model="otm.fee.course.type"><field name="name">Regular Batch</field></record>
+    <record id="type_weekend" model="otm.fee.course.type"><field name="name">Weekend Batch</field></record>
+    <record id="type_crash" model="otm.fee.course.type"><field name="name">Crash Course</field></record>
+    <record id="course_cma" model="otm.fee.course"><field name="name">CMA USA</field></record>
+    <record id="course_acca" model="otm.fee.course"><field name="name">ACCA</field></record>
+    <record id="course_cpa" model="otm.fee.course"><field name="name">CPA USA</field></record>
+    <record id="structure_1" model="otm.fee.structure">
+        <field name="course_id" ref="course_cma"/><field name="course_type_id" ref="type_regular"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="material_fee">8000</field><field name="course_fee">85000</field>
+        <field name="gst_percent">18</field><field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_2" model="otm.fee.structure">
+        <field name="course_id" ref="course_cma"/><field name="course_type_id" ref="type_regular"/><field name="mode">online</field>
+        <field name="admission_fee">3000</field><field name="material_fee">5000</field><field name="course_fee">65000</field>
+        <field name="gst_percent">18</field><field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_3" model="otm.fee.structure">
+        <field name="course_id" ref="course_cma"/><field name="course_type_id" ref="type_weekend"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="material_fee">8000</field><field name="course_fee">90000</field>
+        <field name="gst_percent">18</field><field name="onetime_discount_percent">4</field>
+    </record>
+    <record id="structure_4" model="otm.fee.structure">
+        <field name="course_id" ref="course_acca"/><field name="course_type_id" ref="type_regular"/><field name="mode">offline</field>
+        <field name="admission_fee">6000</field><field name="material_fee">10000</field><field name="course_fee">120000</field>
+        <field name="gst_percent">18</field><field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_5" model="otm.fee.structure">
+        <field name="course_id" ref="course_acca"/><field name="course_type_id" ref="type_regular"/><field name="mode">online</field>
+        <field name="admission_fee">4000</field><field name="material_fee">7000</field><field name="course_fee">95000</field>
+        <field name="gst_percent">18</field><field name="onetime_discount_percent">5</field>
+    </record>
+    <record id="structure_6" model="otm.fee.structure">
+        <field name="course_id" ref="course_cpa"/><field name="course_type_id" ref="type_regular"/><field name="mode">offline</field>
+        <field name="admission_fee">5000</field><field name="material_fee">9000</field><field name="course_fee">110000</field>
+        <field name="gst_percent">18</field><field name="onetime_discount_percent">6</field>
+    </record>
+    <record id="structure_7" model="otm.fee.structure">
+        <field name="course_id" ref="course_cpa"/><field name="course_type_id" ref="type_crash"/><field name="mode">online</field>
+        <field name="admission_fee">3000</field><field name="material_fee">6000</field><field name="course_fee">70000</field>
+        <field name="gst_percent">18</field><field name="onetime_discount_percent">3</field>
+    </record>
+    <record id="sch_merit" model="otm.fee.scholarship"><field name="name">Merit Scholarship</field><field name="kind">scholarship</field><field name="percentage">10</field><field name="apply_on">course_fee</field></record>
+    <record id="sch_sibling" model="otm.fee.scholarship"><field name="name">Sibling Discount</field><field name="kind">discount</field><field name="percentage">5</field><field name="apply_on">course_fee</field></record>
+    <record id="sch_early" model="otm.fee.scholarship"><field name="name">Early Bird Discount</field><field name="kind">discount</field><field name="percentage">7.5</field><field name="apply_on">subtotal</field></record>
+</odoo>

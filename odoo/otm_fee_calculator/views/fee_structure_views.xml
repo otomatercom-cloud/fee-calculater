@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_otm_fee_structure_list" model="ir.ui.view">
+        <field name="name">otm.fee.structure.list</field>
+        <field name="model">otm.fee.structure</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="course_id"/>
+                <field name="course_type_id"/>
+                <field name="mode"/>
+                <field name="admission_fee"/>
+                <field name="material_fee"/>
+                <field name="course_fee"/>
+                <field name="gst_percent"/>
+                <field name="total_fee"/>
+                <field name="onetime_discount_percent"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_otm_fee_structure_form" model="ir.ui.view">
+        <field name="name">otm.fee.structure.form</field>
+        <field name="model">otm.fee.structure</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group name="selection">
+                        <group name="selection_left">
+                            <field name="course_id"/>
+                            <field name="course_type_id"/>
+                            <field name="mode"/>
+                        </group>
+                        <group name="selection_right">
+                            <field name="active"/>
+                            <field name="onetime_discount_percent"/>
+                        </group>
+                    </group>
+                    <group name="fees">
+                        <group name="fees_left" string="Fees">
+                            <field name="admission_fee"/>
+                            <field name="material_fee"/>
+                            <field name="course_fee"/>
+                            <field name="gst_percent"/>
+                        </group>
+                        <group name="fees_right" string="Total (without scholarship)">
+                            <field name="subtotal"/>
+                            <field name="gst_amount"/>
+                            <field name="total_fee"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_otm_fee_structure_search" model="ir.ui.view">
+        <field name="name">otm.fee.structure.search</field>
+        <field name="model">otm.fee.structure</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="course_id"/>
+                <field name="course_type_id"/>
+                <filter name="filter_offline" string="Offline" domain="[('mode', '=', 'offline')]"/>
+                <filter name="filter_online" string="Online" domain="[('mode', '=', 'online')]"/>
+                <separator/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <separator/>
+                <group>
+                    <filter name="group_course" string="Course" context="{'group_by': 'course_id'}"/>
+                    <filter name="group_type" string="Course Type" context="{'group_by': 'course_type_id'}"/>
+                    <filter name="group_mode" string="Mode" context="{'group_by': 'mode'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_otm_fee_structure" model="ir.actions.act_window">
+        <field name="name">Fee Structures</field>
+        <field name="res_model">otm.fee.structure</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

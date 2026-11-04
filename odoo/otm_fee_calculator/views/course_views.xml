@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_otm_fee_course_list" model="ir.ui.view">
+        <field name="name">otm.fee.course.list</field>
+        <field name="model">otm.fee.course</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="structure_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_otm_fee_course_form" model="ir.ui.view">
+        <field name="name">otm.fee.course.form</field>
+        <field name="model">otm.fee.course</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group name="main">
+                        <field name="name"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                    <notebook>
+                        <page string="Fee Structures" name="page_structures">
+                            <field name="structure_ids">
+                                <list>
+                                    <field name="course_type_id"/>
+                                    <field name="mode"/>
+                                    <field name="admission_fee"/>
+                                    <field name="material_fee"/>
+                                    <field name="course_fee"/>
+                                    <field name="gst_percent"/>
+                                    <field name="total_fee"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_otm_fee_course" model="ir.actions.act_window">
+        <field name="name">Courses</field>
+        <field name="res_model">otm.fee.course</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

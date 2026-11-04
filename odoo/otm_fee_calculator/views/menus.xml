@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_otm_fee_root" name="Fee Calculator" sequence="85"
+              groups="group_fee_user"/>
+    <menuitem id="menu_otm_fee_structure" name="Fee Structures" parent="menu_otm_fee_root"
+              action="action_otm_fee_structure" sequence="10"/>
+    <menuitem id="menu_otm_fee_scholarship" name="Scholarships &amp; Discounts" parent="menu_otm_fee_root"
+              action="action_otm_fee_scholarship" sequence="20"/>
+    <menuitem id="menu_otm_fee_config" name="Configuration" parent="menu_otm_fee_root" sequence="90"
+              groups="group_fee_manager"/>
+    <menuitem id="menu_otm_fee_course" name="Courses" parent="menu_otm_fee_config"
+              action="action_otm_fee_course" sequence="10"/>
+    <menuitem id="menu_otm_fee_course_type" name="Course Types" parent="menu_otm_fee_config"
+              action="action_otm_fee_course_type" sequence="20"/>
+</odoo>
