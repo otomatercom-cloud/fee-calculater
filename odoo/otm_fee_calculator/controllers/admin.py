@@ -43,7 +43,6 @@ FIELDS = {
         "course_id": ("m2o", "otm.fee.course"),
         "currency_id": ("m2o", "otm.fee.currency"),
         "amount": ("float", None),
-        "rate_basis": ("sel", ("current", "logic")),
         "note": ("str", None),
         "sequence": ("int", None),
         "active": ("bool", None),
@@ -53,6 +52,7 @@ FIELDS = {
         "symbol": ("str", None),
         "current_rate": ("float", None),
         "logic_rate": ("float", None),
+        "auto_fetch": ("bool", None),
         "sequence": ("int", None),
         "active": ("bool", None),
     },
@@ -143,20 +143,33 @@ class OtmFeeCalculatorAdminApi(http.Controller):
                 {
                     "id": e.id, "name": e.name, "course_id": e.course_id.id, "course": e.course_id.name,
                     "currency_id": e.currency_id.id, "currency": e.currency_id.name,
-                    "amount": e.amount, "rate_basis": e.rate_basis, "note": e.note or "",
-                    "inr": e._inr(), "sequence": e.sequence, "active": e.active,
+                    "amount": e.amount, "note": e.note or "",
+                    "inr": e._inr("logic"), "inr_current": e._inr("current"), "sequence": e.sequence, "active": e.active,
                 }
                 for e in _all("extra")
             ],
             "currencies": [
                 {
                     "id": c.id, "name": c.name, "symbol": c.symbol or "", "current_rate": c.current_rate,
-                    "logic_rate": c.logic_rate, "sequence": c.sequence, "active": c.active,
+                    "logic_rate": c.logic_rate, "auto_fetch": c.auto_fetch, "rate_source": c.rate_source or "", "sequence": c.sequence, "active": c.active,
                     "rate_updated": fields.Datetime.to_string(c.rate_updated) if c.rate_updated else False,
                 }
                 for c in _all("currency")
             ],
         })
+
+    @http.route("/otm_fee/api/admin/fetch_rate", type="http", auth="public", methods=["POST"], csrf=False)
+    def admin_fetch_rate(self, **kw):
+        err = _guard_manager()
+        if err:
+            return err
+        cur = request.env["otm.fee.currency"].browse(_to_int(_body().get("id")) or 0).exists()
+        if not cur:
+            return _json({"ok": False, "error": "Currency not found."}, 404)
+        errors = cur.action_fetch_rate()
+        if errors:
+            return _json({"ok": False, "error": "Could not fetch the live rate. Enter it manually. (%s)" % errors[0]}, 502)
+        return _json({"ok": True, "current_rate": cur.current_rate})
 
     @http.route("/otm_fee/api/admin/save", type="http", auth="public", methods=["POST"], csrf=False)
     def admin_save(self, **kw):

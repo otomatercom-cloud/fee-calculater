@@ -135,7 +135,10 @@ textarea { width: 100%; margin-top: 6px; padding: 12px 14px; border: 1px solid #
 .wide-table { min-width: 1180px; }
 .note { margin-top: 10px; font-size: 13px; }
 
-.toggles h3 { margin-bottom: 10px; }
-.toggle-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.tgl { height: 40px; padding: 0 16px; border: 1px solid var(--line); background: #fff; border-radius: 999px; font: inherit; font-weight: 600; color: var(--brand); cursor: pointer; }
-.tgl.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+.toggle-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.toggle-row .tgl { height: 38px; padding: 0 14px; border: 1.5px solid var(--brand); background: #fff; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; color: var(--brand); cursor: pointer; }
+.toggle-row .tgl:hover { background: #f1efff; }
+.toggle-row .tgl.on { background: var(--brand); color: #fff; }
+.panels { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.panels:empty { display: none; }
+@media (max-width: 800px) { .panels { grid-template-columns: 1fr; gap: 16px; } }

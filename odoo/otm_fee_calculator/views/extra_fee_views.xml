@@ -10,7 +10,6 @@
                 <field name="name"/>
                 <field name="currency_id"/>
                 <field name="amount"/>
-                <field name="rate_basis"/>
                 <field name="inr_amount"/>
                 <field name="note"/>
             </list>

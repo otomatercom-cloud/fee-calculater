@@ -76,7 +76,9 @@ export default function Calculator() {
     }
     r.extra_fees.forEach((e, i) => {
       if (!open["x" + i]) return;
-      lines.push("", `${e.name}: ${e.symbol}${e.amount} × ₹${e.rate} (${e.rate_label}) = ${e.rate_set ? money(e.inr) : "rate not set"}`);
+      lines.push("", `*${e.name}: ${e.symbol}${e.amount}*`,
+        `Market rate (₹${e.current_rate || "-"}): ${e.current_rate ? money(e.inr_current) : "rate not set"}`,
+        `*Logic rate (₹${e.logic_rate || "-"}): ${e.logic_rate ? money(e.inr_logic) : "rate not set"}*`);
     });
     return lines.join("\n");
   }
@@ -159,23 +161,20 @@ export default function Calculator() {
                 <div className="total"><dt>Total (incl. tax)</dt><dd>{money(result.total_with_addon)}</dd></div>
               </dl>
               <p className="muted note">Admission fee is paid separately and is not included in the total.</p>
+              <div className="toggle-row">
+                <button type="button" aria-pressed={!!open.disc} className={`tgl ${open.disc ? "on" : ""}`} onClick={() => toggle("disc")}>{open.disc ? "−" : "+"} Scholarship / Discount</button>
+                <button type="button" aria-pressed={!!open.lump} className={`tgl ${open.lump ? "on" : ""}`} onClick={() => toggle("lump")}>{open.lump ? "−" : "+"} One-time Payment</button>
+                {result.extra_fees.map((e, i) => (
+                  <button key={e.id} type="button" aria-pressed={!!open["x" + i]} className={`tgl ${open["x" + i] ? "on" : ""}`} onClick={() => toggle("x" + i)}>{open["x" + i] ? "−" : "+"} {e.name} ({e.currency})</button>
+                ))}
+              </div>
             </>
           )}
         </section>
 
         {result && (
           <>
-            <div className="card toggles">
-              <h3>More details</h3>
-              <div className="toggle-row">
-                <button type="button" className={`tgl ${open.disc ? "on" : ""}`} onClick={() => toggle("disc")}>Scholarship / Discount</button>
-                <button type="button" className={`tgl ${open.lump ? "on" : ""}`} onClick={() => toggle("lump")}>One-time Payment</button>
-                {result.extra_fees.map((e, i) => (
-                  <button key={e.id} type="button" className={`tgl ${open["x" + i] ? "on" : ""}`} onClick={() => toggle("x" + i)}>{e.name} ({e.currency})</button>
-                ))}
-              </div>
-            </div>
-
+            <div className="panels">
             {open.disc && (
               <section className="card">
                 <h3>Scholarship / Discount</h3>
@@ -219,15 +218,20 @@ export default function Calculator() {
                 <h3>{e.name}</h3>
                 <dl className="lines">
                   <div><dt>Fee ({e.currency})</dt><dd>{e.symbol}{e.amount.toLocaleString("en-IN")}</dd></div>
-                  <div><dt>{e.rate_label}</dt><dd>{e.rate_set ? `₹${e.rate} per ${e.currency}` : "not set"}</dd></div>
-                  <div className="total"><dt>Amount in ₹</dt><dd>{e.rate_set ? money(e.inr) : "Rate not set"}</dd></div>
+                  <div><dt>Market rate{e.current_rate ? ` (₹${e.current_rate} per ${e.currency})` : ""}</dt><dd>{e.current_rate ? money(e.inr_current) : "not set"}</dd></div>
+                  <div className="total"><dt>Logic rate{e.logic_rate ? ` (₹${e.logic_rate})` : ""}</dt><dd>{e.logic_rate ? money(e.inr_logic) : "Rate not set"}</dd></div>
                 </dl>
+                {e.logic_rate > 0 && e.current_rate > 0 && e.inr_current > e.inr_logic && (
+                  <div className="save">Logic rate saves {money(e.inr_current - e.inr_logic)} compared to the market rate</div>
+                )}
                 <p className="muted note">
-                  {e.rate_set ? "Paid separately - not included in the course total." : "Ask the admin to set the rate in Fee Calculator → Currency Rates."}
-                  {e.rate_updated ? ` Rate updated ${e.rate_updated.slice(0, 10)}.` : ""}{e.note ? ` ${e.note}` : ""}
+                  Paid separately - not included in the course total.
+                  {e.rate_updated ? ` Market rate updated ${e.rate_updated.slice(0, 10)}.` : ""}{e.note ? ` ${e.note}` : ""}
                 </p>
               </section>
             ))}
+
+            </div>
 
             <div className="actions">
               <button className="btn ghost" onClick={() => copy(result)}>{copied ? "Copied ✓" : "Copy summary for WhatsApp"}</button>

@@ -28,15 +28,15 @@ const STRUCTURES: S[] = [
 ];
 // Sample foreign-currency fees (illustrative figures + rates, demo mode only)
 const DEMO_RATES = { USD: { current: 88.5, logic: 90 } };
-const DEMO_EXTRAS: Record<number, { name: string; usd: number; basis: "current" | "logic" }[]> = {
-  8: [{ name: "CMA Registration Fee", usd: 100, basis: "current" }, { name: "Exam Registration Fee", usd: 50, basis: "logic" }],
+const DEMO_EXTRAS: Record<number, { name: string; usd: number }[]> = {
+  8: [{ name: "CMA Registration Fee", usd: 100 }, { name: "Exam Registration Fee", usd: 50 }],
 };
 function demoExtras(course: number): ExtraFee[] {
-  return (DEMO_EXTRAS[course] || []).map((e, i) => {
-    const rate = DEMO_RATES.USD[e.basis];
-    return { id: i + 1, name: e.name, currency: "USD", symbol: "$", amount: e.usd, rate_basis: e.basis,
-      rate_label: e.basis === "logic" ? "Logic rate" : "Current rate", rate, rate_set: true, inr: rupee(e.usd * rate), rate_updated: false, note: "" };
-  });
+  return (DEMO_EXTRAS[course] || []).map((e, i) => ({
+    id: i + 1, name: e.name, currency: "USD", symbol: "$", amount: e.usd,
+    current_rate: DEMO_RATES.USD.current, logic_rate: DEMO_RATES.USD.logic,
+    inr_current: rupee(e.usd * DEMO_RATES.USD.current), inr_logic: rupee(e.usd * DEMO_RATES.USD.logic), rate_updated: false, note: "",
+  }));
 }
 const ADMISSION = 5000, GST = 18, LUMP = 5;
 
@@ -93,8 +93,8 @@ export function demoAdminList(): AdminData {
     })),
     extras: Object.entries(DEMO_EXTRAS).flatMap(([cid, list]) => list.map((e, i) => ({
       id: Number(cid) * 10 + i, name: e.name, course_id: Number(cid), course: COURSES[Number(cid)], currency_id: 1, currency: "USD",
-      amount: e.usd, rate_basis: e.basis, note: "", inr: rupee(e.usd * DEMO_RATES.USD[e.basis]), sequence: 10, active: true,
+      amount: e.usd, note: "", inr: rupee(e.usd * DEMO_RATES.USD.logic), inr_current: rupee(e.usd * DEMO_RATES.USD.current), sequence: 10, active: true,
     }))),
-    currencies: [{ id: 1, name: "USD", symbol: "$", current_rate: DEMO_RATES.USD.current, logic_rate: DEMO_RATES.USD.logic, sequence: 1, active: true, rate_updated: false }],
+    currencies: [{ id: 1, name: "USD", symbol: "$", current_rate: DEMO_RATES.USD.current, logic_rate: DEMO_RATES.USD.logic, auto_fetch: true, rate_source: "", sequence: 1, active: true, rate_updated: false }],
   };
 }

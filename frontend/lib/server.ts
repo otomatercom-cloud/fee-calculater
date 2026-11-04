@@ -8,7 +8,7 @@ export const DEMO = process.env.FEE_DEMO === "1";
 const ODOO_URL = (process.env.ODOO_URL || "").replace(/\/+$/, "");
 const ODOO_DB = process.env.ODOO_DB || "";
 
-const ACTIONS = new Set(["me", "options", "calculate", "chart", "admin_list", "admin_save"]);
+const ACTIONS = new Set(["me", "options", "calculate", "chart", "admin_list", "admin_save", "admin_fetch_rate"]);
 
 export function sessionCookieOptions() {
   return { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 12 };
@@ -56,7 +56,7 @@ export async function handleAction(action: string, req: Request) {
     else if (action === "options") out = { status: 200, data: demoOptions() as unknown as Record<string, unknown> };
     else if (action === "chart") out = { status: 200, data: { ok: true, rows: demoChart() } };
     else if (action === "admin_list") out = { status: 200, data: demoAdminList() as unknown as Record<string, unknown> };
-    else if (action === "admin_save") out = { status: 400, data: { ok: false, error: "Demo mode is read-only. Connect Odoo to add or edit fees." } };
+    else if (action === "admin_save" || action === "admin_fetch_rate") out = { status: 400, data: { ok: false, error: "Demo mode is read-only. Connect Odoo to add or edit fees." } };
     else out = demoCalculate(body);
   } else {
     out = await odooPost(`/otm_fee/api/${action.startsWith("admin_") ? "admin/" + action.slice(6) : action}`, body, sid);

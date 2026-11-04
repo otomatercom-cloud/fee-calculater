@@ -8,8 +8,8 @@ export interface Options { ok: true; courses: CourseOption[] }
 export interface FeePart { amount: number; gst: number; total: number }
 export interface ExtraFee {
   id: number; name: string; currency: string; symbol: string; amount: number;
-  rate_basis: "current" | "logic"; rate_label: string; rate: number; rate_set: boolean;
-  inr: number; rate_updated: string | false; note: string;
+  current_rate: number; logic_rate: number; inr_current: number; inr_logic: number;
+  rate_updated: string | false; note: string;
 }
 export interface Calculation {
   structure_id: number;
@@ -43,10 +43,10 @@ export interface AdminStructure {
 }
 export interface AdminExtra {
   id: number; name: string; course_id: number; course: string; currency_id: number; currency: string;
-  amount: number; rate_basis: "current" | "logic"; note: string; inr: number; sequence: number; active: boolean;
+  amount: number; note: string; inr: number; inr_current: number; sequence: number; active: boolean;
 }
 export interface AdminCurrency {
-  id: number; name: string; symbol: string; current_rate: number; logic_rate: number; sequence: number; active: boolean;
+  id: number; name: string; symbol: string; current_rate: number; logic_rate: number; auto_fetch: boolean; rate_source: string; sequence: number; active: boolean;
   rate_updated: string | false;
 }
 export interface AdminData {
