@@ -12,7 +12,7 @@
     "data": [
         "security/security.xml",
         "security/ir.model.access.csv",
-        "data/fee_data_2026.xml",
+        "data/seed_data.xml",
         "views/course_type_views.xml",
         "views/course_views.xml",
         "views/fee_structure_views.xml",

@@ -1,6 +1,10 @@
+import logging
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import float_round
+
+_logger = logging.getLogger(__name__)
 
 MODE_SELECTION = [("offline", "Offline"), ("online", "Online")]
 DISCOUNT_TYPES = [("scholarship", "Scholarship"), ("discount", "Discount")]
@@ -133,3 +137,74 @@ class OtmFeeStructure(models.Model):
                 "saving": _rupee(final - ot_final),
             },
         }
+
+    # ------------------------------------------------------------------
+    # One-time seed: Logic All Courses Fee Structure 2026 (amounts excl. GST)
+    # ------------------------------------------------------------------
+    _SEED_2026 = [
+        # course, course type, mode, course fee, add-on fee, scholarship %
+        ("CA Foundation", "CA", "offline", 55000, 5000, 10),
+        ("CA Foundation Plus Two", "CA", "online", 49500, 0, 49.4),
+        ("CA Foundation Plus One", "CA", "online", 59500, 0, 41.17),
+        ("CA Inter", "CA", "offline", 90000, 5000, 10),
+        ("CA FDN + Inter", "CA", "offline", 120000, 5000, 10),
+        ("CMA CAT + Inter", "CMA", "offline", 90000, 5000, 10),
+        ("CMA Inter", "CMA", "offline", 80000, 5000, 10),
+        ("CMA USA", "CMA", "offline", 95000, 7000, 10),
+        ("CMA USA", "CMA", "online", 70000, 0, 0),
+        ("BCOM + ACCA", "ACCA", "offline", 120000, 10000, 25),
+        ("MBA + ACCA", "ACCA", "online", 75000, 0, 0),
+        ("CIAP", "CIAP", "offline", 102542.37, 5000, 0),
+    ]
+    _OLD_DEMO = {
+        "otm.fee.structure": ["structure_%d" % i for i in range(1, 8)],
+        "otm.fee.course": ["course_cma", "course_acca", "course_cpa"],
+        "otm.fee.course.type": ["type_regular", "type_weekend", "type_crash"],
+    }
+    _OLD_DEMO_TYPES = ("Regular Batch", "Weekend Batch", "Crash Course")
+
+    @api.model
+    def _remove_old_demo_data(self):
+        """Remove the sample records shipped by the first version (only those exact demo records)."""
+        for model, xmlids in self._OLD_DEMO.items():
+            for xmlid in xmlids:
+                rec = self.env.ref("otm_fee_calculator." + xmlid, raise_if_not_found=False)
+                if not rec or rec._name != model:
+                    continue
+                if model == "otm.fee.structure" and rec.course_type_id.name not in self._OLD_DEMO_TYPES:
+                    continue
+                try:
+                    with self.env.cr.savepoint():
+                        rec.unlink()
+                except Exception:  # noqa: BLE001 - still in use: keep it
+                    _logger.info("Fee calculator: kept %s (in use)", xmlid)
+
+    @api.model
+    def _seed_fee_data_2026(self):
+        param = self.env["ir.config_parameter"].sudo()
+        if param.get_param("otm_fee_calculator.seed_2026_done"):
+            return
+        self._remove_old_demo_data()
+        Course = self.env["otm.fee.course"].with_context(active_test=False)
+        CType = self.env["otm.fee.course.type"].with_context(active_test=False)
+        Structure = self.with_context(active_test=False)
+        for course_name, type_name, mode, course_fee, addon, disc in self._SEED_2026:
+            course = Course.search([("name", "=", course_name)], limit=1) or Course.create({"name": course_name})
+            ctype = CType.search([("name", "=", type_name)], limit=1) or CType.create({"name": type_name})
+            if Structure.search_count([
+                ("course_id", "=", course.id), ("course_type_id", "=", ctype.id), ("mode", "=", mode),
+            ]):
+                continue
+            Structure.create({
+                "course_id": course.id,
+                "course_type_id": ctype.id,
+                "mode": mode,
+                "admission_fee": 5000.0,
+                "course_fee": course_fee,
+                "material_fee": addon,
+                "gst_percent": 18.0,
+                "discount_type": "scholarship",
+                "discount_percent": disc,
+                "onetime_discount_percent": 5.0,
+            })
+        param.set_param("otm_fee_calculator.seed_2026_done", "1")
