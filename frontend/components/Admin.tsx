@@ -29,7 +29,7 @@ const FIELDS: Record<Tab, FieldDef[]> = {
     { key: "course_id", label: "Course Name", type: "select", options: (d) => d.courses.filter((c) => c.active).map((c) => ({ value: String(c.id), label: c.name })) },
     { key: "course_type_id", label: "Course Type", type: "select", options: (d) => d.types.filter((c) => c.active).map((c) => ({ value: String(c.id), label: c.name })) },
     { key: "mode", label: "Mode", type: "select", options: () => MODE_OPTS },
-    { key: "admission_fee", label: "Admission Fee (₹, excl. GST)", type: "number" },
+    { key: "admission_fee", label: "Admission Fee (₹, excl. GST)", type: "number", hint: "Enter the amount BEFORE GST. Eg. 5000 here = ₹5,900 for the student." },
     { key: "course_fee", label: "Course Fee / Amount (₹, excl. GST)", type: "number" },
     { key: "addon_fee", label: "Add-on Fee (₹, excl. GST)", type: "number", hint: "Leave 0 if none - it is hidden in the calculator." },
     { key: "material_fee", label: "Material Fee (₹, excl. GST)", type: "number", hint: "Leave 0 if none - it is hidden in the calculator." },
@@ -183,6 +183,9 @@ export default function Admin() {
                   <span className="lbl">{f.label}</span>
                   {f.type === "text" && <input value={String(v ?? "")} onChange={(e) => set(e.target.value)} />}
                   {f.type === "number" && <input type="number" inputMode="decimal" min="0" step="any" value={String(v ?? "")} onChange={(e) => set(e.target.value)} />}
+                  {tab === "structure" && f.label.includes("excl. GST") && Number(v) > 0 && (
+                    <small className="gst-prev">With {pct(Number(editing.form.gst_percent) || 0)} GST = <b>{money(Math.round(Number(v) * (100 + (Number(editing.form.gst_percent) || 0)) / 100 + 1e-9))}</b> (the amount the student pays)</small>
+                  )}
                   {f.type === "textarea" && <textarea value={String(v ?? "")} onChange={(e) => set(e.target.value)} rows={3} />}
                   {f.type === "select" && (
                     <select value={String(v ?? "")} onChange={(e) => set(e.target.value)}>

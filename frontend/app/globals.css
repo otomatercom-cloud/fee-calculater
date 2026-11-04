@@ -142,3 +142,8 @@ textarea { width: 100%; margin-top: 6px; padding: 12px 14px; border: 1px solid #
 .panels { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
 .panels:empty { display: none; }
 @media (max-width: 800px) { .panels { grid-template-columns: 1fr; gap: 16px; } }
+
+.pct-edit { display: block; font-weight: 600; font-size: 13px; margin-bottom: 14px; }
+.pct-row { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.pct-row input { max-width: 140px; }
+.gst-prev { display: block; margin-top: 6px; color: var(--brand); }

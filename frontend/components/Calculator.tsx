@@ -5,6 +5,17 @@ import { api } from "@/lib/api";
 import { modeLabel, money, pct } from "@/lib/format";
 import type { Calculation, Mode, Options } from "@/lib/types";
 
+const rupee = (n: number) => Math.round(n + 1e-9);
+// Same order as Odoo: discount on course fee incl. GST only; add-on/material not discounted; lump sum on discounted course fee.
+function adjust(r: Calculation, p: number) {
+  const extras = r.addon.total + r.material.total;
+  const amount = Math.min(rupee((r.course_fee.total * p) / 100), r.course_fee.total);
+  const discounted = rupee(r.course_fee.total - amount);
+  const final = rupee(discounted + extras);
+  const lump = rupee((discounted * (100 - r.one_time.percentage)) / 100 + extras);
+  return { amount, discounted, final, lump, saving: rupee(final - lump) };
+}
+
 export default function Calculator() {
   const [opts, setOpts] = useState<Options | null>(null);
   const [courseId, setCourseId] = useState("");
@@ -14,6 +25,7 @@ export default function Calculator() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [discPct, setDiscPct] = useState("0");
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const toggle = (k: string) => setOpen((o) => ({ ...o, [k]: !o[k] }));
 
@@ -47,6 +59,7 @@ export default function Calculator() {
       });
       setResult(d.result);
       setOpen({});
+      setDiscPct(String(d.result.discount.percentage));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not calculate.");
     } finally {
@@ -58,7 +71,11 @@ export default function Calculator() {
     pickCourse("");
   }
 
+  const pctNum = Math.min(100, Math.max(0, Number(discPct) || 0));
+  const D = result ? adjust(result, pctNum) : null;
+
   function summary(r: Calculation) {
+    const D = adjust(r, pctNum);
     const lines = [
       `*Fee details – ${r.course} (${r.course_type}, ${modeLabel(r.mode)})*`,
       `Admission Fee (incl. GST): ${money(r.admission.total)}`,
@@ -67,12 +84,12 @@ export default function Calculator() {
     if (r.addon.total) lines.push(`Add-on Fee (incl. GST): ${money(r.addon.total)}`);
     if (r.material.total) lines.push(`Material Fee (incl. GST): ${money(r.material.total)}`);
     lines.push(`*Total: ${money(r.total_with_addon)}*`);
-    if (open.disc && r.discount.percentage > 0) {
-      lines.push("", `${r.discount.type === "discount" ? "Discount" : "Scholarship"} ${pct(r.discount.percentage)}: -${money(r.discount.amount)}`,
-        `*Final fee: ${money(r.final)}*`);
+    if (open.disc && pctNum > 0) {
+      lines.push("", `${r.discount.type === "discount" ? "Discount" : "Scholarship"} ${pct(pctNum)}: -${money(D.amount)}`,
+        `*Final fee: ${money(D.final)}*`);
     }
     if (open.lump && r.one_time.percentage > 0) {
-      lines.push("", `*Lump sum payment: ${money(r.one_time.final)}* (extra ${pct(r.one_time.percentage)} off, you save ${money(r.one_time.saving)})`);
+      lines.push("", `*Lump sum payment: ${money(D.lump)}* (extra ${pct(r.one_time.percentage)} off, you save ${money(D.saving)})`);
     }
     r.extra_fees.forEach((e, i) => {
       if (!open["x" + i]) return;
@@ -178,23 +195,25 @@ export default function Calculator() {
             {open.disc && (
               <section className="card">
                 <h3>Scholarship / Discount</h3>
-                {result.discount.percentage > 0 ? (
-                  <>
-                    <div className="info-grid">
-                      <div><small>Type</small><b className="cap">{result.discount.type}</b></div>
-                      <div><small>Percentage</small><b>{pct(result.discount.percentage)}</b></div>
-                      <div><small>Discount</small><b className="good">−{money(result.discount.amount)}</b></div>
-                      <div><small>Course fee after discount</small><b>{money(result.discount.discounted_fee)}</b></div>
-                    </div>
-                    <dl className="lines">
-                      {result.addon.total > 0 && <div><dt>Add-on fee (no discount)</dt><dd>{money(result.addon.total)}</dd></div>}
-                      {result.material.total > 0 && <div><dt>Material fee (no discount)</dt><dd>{money(result.material.total)}</dd></div>}
-                      <div className="total"><dt>Final fee</dt><dd>{money(result.final)}</dd></div>
-                    </dl>
-                  </>
-                ) : (
-                  <p className="muted">No scholarship or discount is available for this course.</p>
-                )}
+                <label className="pct-edit">Percentage (%)
+                  <div className="pct-row">
+                    <input type="number" inputMode="decimal" min="0" max="100" step="any" value={discPct} onChange={(e) => setDiscPct(e.target.value)} />
+                    {pctNum !== result.discount.percentage && (
+                      <button type="button" className="link-btn" onClick={() => setDiscPct(String(result.discount.percentage))}>Reset to {pct(result.discount.percentage)}</button>
+                    )}
+                  </div>
+                </label>
+                <div className="info-grid">
+                  <div><small>Type</small><b className="cap">{result.discount.type}</b></div>
+                  <div><small>Percentage</small><b>{pct(pctNum)}</b></div>
+                  <div><small>Discount</small><b className="good">−{money(D!.amount)}</b></div>
+                  <div><small>Course fee after discount</small><b>{money(D!.discounted)}</b></div>
+                </div>
+                <dl className="lines">
+                  {result.addon.total > 0 && <div><dt>Add-on fee (no discount)</dt><dd>{money(result.addon.total)}</dd></div>}
+                  {result.material.total > 0 && <div><dt>Material fee (no discount)</dt><dd>{money(result.material.total)}</dd></div>}
+                  <div className="total"><dt>Final fee</dt><dd>{money(D!.final)}</dd></div>
+                </dl>
               </section>
             )}
 
@@ -203,9 +222,9 @@ export default function Calculator() {
                 <h3>One-time (Lump Sum) Payment</h3>
                 {result.one_time.percentage > 0 ? (
                   <>
-                    <p className="muted">Pay the full fee in one go and get an extra {pct(result.one_time.percentage)} off the {result.discount.percentage > 0 ? "discounted " : ""}course fee.</p>
-                    <div className="big">{money(result.one_time.final)}</div>
-                    <div className="save">You save {money(result.one_time.saving)}{result.addon.total + result.material.total > 0 ? " (add-on / material fee included in the amount)" : ""}</div>
+                    <p className="muted">Pay the full fee in one go and get an extra {pct(result.one_time.percentage)} off the {pctNum > 0 ? "discounted " : ""}course fee.</p>
+                    <div className="big">{money(D!.lump)}</div>
+                    <div className="save">You save {money(D!.saving)}{result.addon.total + result.material.total > 0 ? " (add-on / material fee included in the amount)" : ""}</div>
                   </>
                 ) : (
                   <p className="muted">No lump sum offer is set for this course.</p>
