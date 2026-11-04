@@ -10,7 +10,8 @@
                 <field name="mode"/>
                 <field name="admission_fee"/>
                 <field name="course_fee"/>
-                <field name="material_fee"/>
+                <field name="addon_fee"/>
+                <field name="material_fee" optional="show"/>
                 <field name="gst_percent"/>
                 <field name="discount_percent"/>
                 <field name="total_fee"/>
@@ -39,6 +40,7 @@
                         <group name="fees_left" string="Fees (enter excluding GST)">
                             <field name="admission_fee"/>
                             <field name="course_fee"/>
+                            <field name="addon_fee"/>
                             <field name="material_fee"/>
                             <field name="gst_percent"/>
                         </group>

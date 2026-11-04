@@ -2,7 +2,7 @@ import logging
 
 import psycopg2
 
-from odoo import http
+from odoo import fields, http
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.http import request
 
@@ -16,6 +16,8 @@ MODELS = {
     "course": "otm.fee.course",
     "type": "otm.fee.course.type",
     "structure": "otm.fee.structure",
+    "extra": "otm.fee.extra",
+    "currency": "otm.fee.currency",
 }
 
 # field -> (kind, extra)   kinds: str int float bool m2o sel m2m
@@ -29,10 +31,29 @@ FIELDS = {
         "admission_fee": ("float", None),
         "course_fee": ("float", None),
         "material_fee": ("float", None),
+        "addon_fee": ("float", None),
         "gst_percent": ("float", None),
         "discount_type": ("sel", ("scholarship", "discount")),
         "discount_percent": ("float", None),
         "onetime_discount_percent": ("float", None),
+        "active": ("bool", None),
+    },
+    "extra": {
+        "name": ("str", None),
+        "course_id": ("m2o", "otm.fee.course"),
+        "currency_id": ("m2o", "otm.fee.currency"),
+        "amount": ("float", None),
+        "rate_basis": ("sel", ("current", "logic")),
+        "note": ("str", None),
+        "sequence": ("int", None),
+        "active": ("bool", None),
+    },
+    "currency": {
+        "name": ("str", None),
+        "symbol": ("str", None),
+        "current_rate": ("float", None),
+        "logic_rate": ("float", None),
+        "sequence": ("int", None),
         "active": ("bool", None),
     },
 }
@@ -40,6 +61,8 @@ REQUIRED = {
     "course": ("name",),
     "type": ("name",),
     "structure": ("course_id", "course_type_id", "mode"),
+    "extra": ("name", "course_id", "currency_id"),
+    "currency": ("name",),
 }
 
 
@@ -109,12 +132,29 @@ class OtmFeeCalculatorAdminApi(http.Controller):
                     "id": s.id, "course_id": s.course_id.id, "course": s.course_id.name,
                     "course_type_id": s.course_type_id.id, "course_type": s.course_type_id.name,
                     "mode": s.mode, "admission_fee": s.admission_fee, "course_fee": s.course_fee,
-                    "material_fee": s.material_fee, "gst_percent": s.gst_percent,
+                    "material_fee": s.material_fee, "addon_fee": s.addon_fee, "gst_percent": s.gst_percent,
                     "discount_type": s.discount_type or "scholarship", "discount_percent": s.discount_percent,
                     "onetime_discount_percent": s.onetime_discount_percent,
                     "total": s.total_fee, "active": s.active,
                 }
                 for s in _all("structure")
+            ],
+            "extras": [
+                {
+                    "id": e.id, "name": e.name, "course_id": e.course_id.id, "course": e.course_id.name,
+                    "currency_id": e.currency_id.id, "currency": e.currency_id.name,
+                    "amount": e.amount, "rate_basis": e.rate_basis, "note": e.note or "",
+                    "inr": e._inr(), "sequence": e.sequence, "active": e.active,
+                }
+                for e in _all("extra")
+            ],
+            "currencies": [
+                {
+                    "id": c.id, "name": c.name, "symbol": c.symbol or "", "current_rate": c.current_rate,
+                    "logic_rate": c.logic_rate, "sequence": c.sequence, "active": c.active,
+                    "rate_updated": fields.Datetime.to_string(c.rate_updated) if c.rate_updated else False,
+                }
+                for c in _all("currency")
             ],
         })
 

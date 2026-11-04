@@ -5,3 +5,7 @@ access_otm_fee_course_user,otm.fee.course user,model_otm_fee_course,group_fee_us
 access_otm_fee_course_manager,otm.fee.course manager,model_otm_fee_course,group_fee_manager,1,1,1,1
 access_otm_fee_structure_user,otm.fee.structure user,model_otm_fee_structure,group_fee_user,1,0,0,0
 access_otm_fee_structure_manager,otm.fee.structure manager,model_otm_fee_structure,group_fee_manager,1,1,1,1
+access_otm_fee_currency_user,otm.fee.currency user,model_otm_fee_currency,group_fee_user,1,0,0,0
+access_otm_fee_currency_manager,otm.fee.currency manager,model_otm_fee_currency,group_fee_manager,1,1,1,1
+access_otm_fee_extra_user,otm.fee.extra user,model_otm_fee_extra,group_fee_user,1,0,0,0
+access_otm_fee_extra_manager,otm.fee.extra manager,model_otm_fee_extra,group_fee_manager,1,1,1,1

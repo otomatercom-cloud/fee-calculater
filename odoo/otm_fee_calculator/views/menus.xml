@@ -10,4 +10,8 @@
               action="action_otm_fee_course" sequence="10"/>
     <menuitem id="menu_otm_fee_course_type" name="Course Types" parent="menu_otm_fee_config"
               action="action_otm_fee_course_type" sequence="20"/>
+    <menuitem id="menu_otm_fee_extra" name="Exam / Registration Fees" parent="menu_otm_fee_config"
+              action="action_otm_fee_extra" sequence="30"/>
+    <menuitem id="menu_otm_fee_currency" name="Currency Rates" parent="menu_otm_fee_config"
+              action="action_otm_fee_currency" sequence="40"/>
 </odoo>

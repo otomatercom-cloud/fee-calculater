@@ -1,6 +1,6 @@
 // Logic All Courses Fee Structure 2026 + the same calculation order as Odoo (otm.fee.structure.calculate).
 // Used only when FEE_DEMO=1 so the UI can be previewed without an Odoo server.
-import type { AdminData, Calculation, ChartRow, DiscountType, FeePart, Mode, Options } from "./types";
+import type { AdminData, Calculation, ChartRow, DiscountType, ExtraFee, FeePart, Mode, Options } from "./types";
 
 const rupee = (n: number) => Math.round(n + 1e-9);
 const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -26,6 +26,18 @@ const STRUCTURES: S[] = [
   { id: 11, c: 10, t: 3, m: "online", course: 75000, addon: 0, disc: 0 },
   { id: 12, c: 11, t: 4, m: "offline", course: 102542.37, addon: 5000, disc: 0 },
 ];
+// Sample foreign-currency fees (illustrative figures + rates, demo mode only)
+const DEMO_RATES = { USD: { current: 88.5, logic: 90 } };
+const DEMO_EXTRAS: Record<number, { name: string; usd: number; basis: "current" | "logic" }[]> = {
+  8: [{ name: "CMA Registration Fee", usd: 100, basis: "current" }, { name: "Exam Registration Fee", usd: 50, basis: "logic" }],
+};
+function demoExtras(course: number): ExtraFee[] {
+  return (DEMO_EXTRAS[course] || []).map((e, i) => {
+    const rate = DEMO_RATES.USD[e.basis];
+    return { id: i + 1, name: e.name, currency: "USD", symbol: "$", amount: e.usd, rate_basis: e.basis,
+      rate_label: e.basis === "logic" ? "Logic rate" : "Current rate", rate, rate_set: true, inr: rupee(e.usd * rate), rate_updated: false, note: "" };
+  });
+}
 const ADMISSION = 5000, GST = 18, LUMP = 5;
 
 export function demoOptions(): Options {
@@ -46,7 +58,7 @@ function calc(s: S): Calculation {
   const otFinal = rupee((discounted * (100 - LUMP)) / 100 + addon.total);
   return {
     structure_id: s.id, course: COURSES[s.c], course_type: TYPES[s.t], mode: s.m, gst_percent: GST,
-    admission, course_fee: course, addon, total_with_addon: rupee(course.total + addon.total),
+    admission, course_fee: course, addon, material: part(0), extra_fees: demoExtras(s.c), total_with_addon: rupee(course.total + addon.total),
     discount: { type: "scholarship" as DiscountType, percentage: s.disc, amount: dAmount, discounted_fee: discounted },
     final, one_time: { percentage: LUMP, final: otFinal, saving: rupee(final - otFinal) },
   };
@@ -62,7 +74,7 @@ export function demoChart(): ChartRow[] {
   return STRUCTURES.map((s) => {
     const c = calc(s);
     return { id: s.id, course: c.course, course_type: c.course_type, mode: c.mode, admission: c.admission.total,
-      course_fee: c.course_fee.amount, course_incl: c.course_fee.total, addon: c.addon.total, total_with_addon: c.total_with_addon,
+      course_fee: c.course_fee.amount, course_incl: c.course_fee.total, addon: c.addon.total, material: c.material.total, total_with_addon: c.total_with_addon,
       discount_type: c.discount.type, discount_percent: c.discount.percentage, discount_amount: c.discount.amount,
       discounted_fee: c.discount.discounted_fee, final: c.final, one_time_percent: c.one_time.percentage, one_time_final: c.one_time.final };
   });
@@ -75,9 +87,14 @@ export function demoAdminList(): AdminData {
     types: Object.entries(TYPES).map(([id, name]) => ({ id: Number(id), name, sequence: 10, active: true })),
     structures: STRUCTURES.map((s) => ({
       id: s.id, course_id: s.c, course: COURSES[s.c], course_type_id: s.t, course_type: TYPES[s.t], mode: s.m,
-      admission_fee: ADMISSION, course_fee: s.course, material_fee: s.addon, gst_percent: GST,
+      admission_fee: ADMISSION, course_fee: s.course, material_fee: 0, addon_fee: s.addon, gst_percent: GST,
       discount_type: "scholarship" as DiscountType, discount_percent: s.disc, onetime_discount_percent: LUMP,
       total: calc(s).total_with_addon, active: true,
     })),
+    extras: Object.entries(DEMO_EXTRAS).flatMap(([cid, list]) => list.map((e, i) => ({
+      id: Number(cid) * 10 + i, name: e.name, course_id: Number(cid), course: COURSES[Number(cid)], currency_id: 1, currency: "USD",
+      amount: e.usd, rate_basis: e.basis, note: "", inr: rupee(e.usd * DEMO_RATES.USD[e.basis]), sequence: 10, active: true,
+    }))),
+    currencies: [{ id: 1, name: "USD", symbol: "$", current_rate: DEMO_RATES.USD.current, logic_rate: DEMO_RATES.USD.logic, sequence: 1, active: true, rate_updated: false }],
   };
 }

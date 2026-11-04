@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_otm_fee_extra_list" model="ir.ui.view">
+        <field name="name">otm.fee.extra.list</field>
+        <field name="model">otm.fee.extra</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="course_id"/>
+                <field name="name"/>
+                <field name="currency_id"/>
+                <field name="amount"/>
+                <field name="rate_basis"/>
+                <field name="inr_amount"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_otm_fee_extra_search" model="ir.ui.view">
+        <field name="name">otm.fee.extra.search</field>
+        <field name="model">otm.fee.extra</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="course_id"/>
+                <group>
+                    <filter name="group_course" string="Course" context="{'group_by': 'course_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_otm_fee_extra" model="ir.actions.act_window">
+        <field name="name">Exam / Registration Fees</field>
+        <field name="res_model">otm.fee.extra</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_otm_fee_currency_list" model="ir.ui.view">
+        <field name="name">otm.fee.currency.list</field>
+        <field name="model">otm.fee.currency</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="symbol"/>
+                <field name="current_rate"/>
+                <field name="logic_rate"/>
+                <field name="rate_updated"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_otm_fee_currency" model="ir.actions.act_window">
+        <field name="name">Currency Rates</field>
+        <field name="res_model">otm.fee.currency</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

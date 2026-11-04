@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import { modeLabel, money, pct } from "@/lib/format";
 import type { AdminData } from "@/lib/types";
 
-type Tab = "structure" | "course" | "type";
+type Tab = "structure" | "course" | "type" | "extra" | "currency";
 type Val = string | number | boolean | number[];
 type Row = Record<string, Val> & { id: number; active: boolean };
 interface Opt { value: string; label: string }
@@ -20,6 +20,8 @@ const TABS: { key: Tab; label: string; add: string }[] = [
   { key: "structure", label: "Fee Structures", add: "Add Fee Structure" },
   { key: "course", label: "Courses", add: "Add Course" },
   { key: "type", label: "Course Types", add: "Add Course Type" },
+  { key: "extra", label: "Exam / Registration Fees", add: "Add Exam / Registration Fee" },
+  { key: "currency", label: "Currency Rates", add: "Add Currency" },
 ];
 
 const FIELDS: Record<Tab, FieldDef[]> = {
@@ -29,7 +31,8 @@ const FIELDS: Record<Tab, FieldDef[]> = {
     { key: "mode", label: "Mode", type: "select", options: () => MODE_OPTS },
     { key: "admission_fee", label: "Admission Fee (₹, excl. GST)", type: "number" },
     { key: "course_fee", label: "Course Fee / Amount (₹, excl. GST)", type: "number" },
-    { key: "material_fee", label: "Material / Add-on Fee (₹, excl. GST)", type: "number" },
+    { key: "addon_fee", label: "Add-on Fee (₹, excl. GST)", type: "number", hint: "Leave 0 if none - it is hidden in the calculator." },
+    { key: "material_fee", label: "Material Fee (₹, excl. GST)", type: "number", hint: "Leave 0 if none - it is hidden in the calculator." },
     { key: "gst_percent", label: "GST (%)", type: "number" },
     { key: "discount_type", label: "Discount Category", type: "select", options: () => [{ value: "scholarship", label: "Scholarship" }, { value: "discount", label: "Discount" }] },
     { key: "discount_percent", label: "Scholarship / Discount (%)", type: "number", hint: "Applied on course fee incl. GST. Add-on fee is not discounted." },
@@ -37,12 +40,28 @@ const FIELDS: Record<Tab, FieldDef[]> = {
   ],
   course: [{ key: "name", label: "Course Name", type: "text" }],
   type: [{ key: "name", label: "Course Type", type: "text" }],
+  extra: [
+    { key: "course_id", label: "Course Name", type: "select", options: (d) => d.courses.filter((c) => c.active).map((c) => ({ value: String(c.id), label: c.name })) },
+    { key: "name", label: "Fee Name", type: "text", hint: "e.g. CMA Registration Fee, Exam Registration Fee" },
+    { key: "currency_id", label: "Currency", type: "select", options: (d) => d.currencies.filter((c) => c.active).map((c) => ({ value: String(c.id), label: c.name })) },
+    { key: "amount", label: "Amount (in that currency)", type: "number" },
+    { key: "rate_basis", label: "Convert Using", type: "select", options: () => [{ value: "current", label: "Current rate" }, { value: "logic", label: "Logic rate" }] },
+    { key: "note", label: "Note (optional)", type: "text" },
+  ],
+  currency: [
+    { key: "name", label: "Currency Code", type: "text", hint: "e.g. USD, GBP" },
+    { key: "symbol", label: "Symbol", type: "text" },
+    { key: "current_rate", label: "Current Rate (₹ per 1)", type: "number", hint: "Update whenever the dollar rate changes." },
+    { key: "logic_rate", label: "Logic Rate (₹ per 1)", type: "number", hint: "Rate Logic charges for fees set to 'Logic rate'." },
+  ],
 };
 
 const DEFAULTS: Record<Tab, Record<string, Val>> = {
-  structure: { course_id: "", course_type_id: "", mode: "offline", admission_fee: 0, course_fee: 0, material_fee: 0, gst_percent: 18, discount_type: "scholarship", discount_percent: 0, onetime_discount_percent: 5 },
+  structure: { course_id: "", course_type_id: "", mode: "offline", admission_fee: 0, course_fee: 0, material_fee: 0, addon_fee: 0, gst_percent: 18, discount_type: "scholarship", discount_percent: 0, onetime_discount_percent: 5 },
   course: { name: "" },
   type: { name: "" },
+  extra: { course_id: "", name: "", currency_id: "", amount: 0, rate_basis: "current", note: "" },
+  currency: { name: "", symbol: "", current_rate: 0, logic_rate: 0 },
 };
 
 export default function Admin() {
@@ -67,7 +86,8 @@ export default function Admin() {
   useEffect(() => { void load(); }, [load]);
 
   const rows: Row[] = !data ? [] : (
-    tab === "structure" ? data.structures : tab === "course" ? data.courses : data.types
+    tab === "structure" ? data.structures : tab === "course" ? data.courses : tab === "type" ? data.types
+      : tab === "extra" ? data.extras : data.currencies
   ) as unknown as Row[];
   const shown = rows.filter((r) => showArchived || r.active);
 
@@ -188,7 +208,9 @@ export default function Admin() {
 }
 
 function head(tab: Tab) {
-  if (tab === "structure") return <tr><th>Course</th><th>Type</th><th>Mode</th><th className="num">Admission</th><th className="num">Course Fee</th><th className="num">Add-on</th><th className="num">GST</th><th className="num">Disc %</th><th className="num">Lump %</th><th className="num">Actions</th></tr>;
+  if (tab === "structure") return <tr><th>Course</th><th>Type</th><th>Mode</th><th className="num">Admission</th><th className="num">Course Fee</th><th className="num">Add-on</th><th className="num">Material</th><th className="num">GST</th><th className="num">Disc %</th><th className="num">Lump %</th><th className="num">Actions</th></tr>;
+  if (tab === "extra") return <tr><th>Course</th><th>Fee</th><th className="num">Amount</th><th>Rate Used</th><th className="num">In ₹</th><th className="num">Actions</th></tr>;
+  if (tab === "currency") return <tr><th>Currency</th><th className="num">Current Rate</th><th className="num">Logic Rate</th><th>Updated</th><th className="num">Actions</th></tr>;
   return <tr><th>Name</th><th className="num">Actions</th></tr>;
 }
 
@@ -198,8 +220,21 @@ function cells(tab: Tab, r: Row) {
     return (<>
       <td><b>{String(x.course)}</b></td><td>{String(x.course_type)}</td>
       <td><span className={`chip ${x.mode}`}>{modeLabel(String(x.mode))}</span></td>
-      <td className="num">{money(Number(x.admission_fee))}</td><td className="num">{money(Number(x.course_fee))}</td><td className="num">{money(Number(x.material_fee))}</td>
+      <td className="num">{money(Number(x.admission_fee))}</td><td className="num">{money(Number(x.course_fee))}</td><td className="num">{Number(x.addon_fee) ? money(Number(x.addon_fee)) : "–"}</td><td className="num">{Number(x.material_fee) ? money(Number(x.material_fee)) : "–"}</td>
       <td className="num">{pct(Number(x.gst_percent))}</td><td className="num">{pct(Number(x.discount_percent))}</td><td className="num">{pct(Number(x.onetime_discount_percent))}</td>
+    </>);
+  if (tab === "extra")
+    return (<>
+      <td><b>{String(x.course)}</b></td><td>{String(x.name)}</td>
+      <td className="num">{String(x.currency)} {Number(x.amount).toLocaleString("en-IN")}</td>
+      <td>{x.rate_basis === "logic" ? "Logic rate" : "Current rate"}</td><td className="num">{Number(x.inr) ? money(Number(x.inr)) : "rate not set"}</td>
+    </>);
+  if (tab === "currency")
+    return (<>
+      <td><b>{String(x.name)}</b> {String(x.symbol)}</td>
+      <td className="num">{Number(x.current_rate) ? `₹${Number(x.current_rate)}` : "not set"}</td>
+      <td className="num">{Number(x.logic_rate) ? `₹${Number(x.logic_rate)}` : "not set"}</td>
+      <td>{x.rate_updated ? String(x.rate_updated).slice(0, 16) : "–"}</td>
     </>);
   return <td><b>{String(x.name)}</b></td>;
 }

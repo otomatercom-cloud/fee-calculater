@@ -54,7 +54,7 @@ export default function FeeChart() {
                 <td className="num">{money(r.admission)}</td><td className="num">{money(r.course_fee)}</td><td className="num">{money(r.course_incl)}</td>
                 <td className="num">{r.discount_percent ? pct(r.discount_percent) : "–"}</td>
                 <td className="num">{r.discount_amount ? money(r.discount_amount) : "–"}</td>
-                <td className="num">{money(r.discounted_fee)}</td><td className="num">{r.addon ? money(r.addon) : "–"}</td>
+                <td className="num">{money(r.discounted_fee)}</td><td className="num">{r.addon + r.material ? money(r.addon + r.material) : "–"}</td>
                 <td className="num">{money(r.total_with_addon)}</td><td className="num strong">{money(r.final)}</td>
                 <td className="num strong good">{money(r.one_time_final)}</td>
               </tr>

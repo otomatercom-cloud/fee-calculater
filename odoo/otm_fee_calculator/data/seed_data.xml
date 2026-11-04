@@ -2,4 +2,5 @@
 <odoo>
     <!-- Loads the Logic All Courses Fee Structure 2026 once (safe on upgrade; reuses courses that already exist). -->
     <function model="otm.fee.structure" name="_seed_fee_data_2026"/>
+    <function model="otm.fee.currency" name="_seed_currencies"/>
 </odoo>

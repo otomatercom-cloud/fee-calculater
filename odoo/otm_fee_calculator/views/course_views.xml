@@ -30,10 +30,24 @@
                                     <field name="course_type_id"/>
                                     <field name="mode"/>
                                     <field name="admission_fee"/>
+                                    <field name="addon_fee"/>
                                     <field name="material_fee"/>
                                     <field name="course_fee"/>
                                     <field name="gst_percent"/>
                                     <field name="total_fee"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Exam / Registration Fees" name="page_extras">
+                            <field name="extra_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="currency_id"/>
+                                    <field name="amount"/>
+                                    <field name="rate_basis"/>
+                                    <field name="inr_amount"/>
+                                    <field name="note"/>
                                 </list>
                             </field>
                         </page>

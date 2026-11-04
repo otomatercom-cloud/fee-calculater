@@ -32,7 +32,14 @@ class OtmFeeStructure(models.Model):
     mode = fields.Selection(MODE_SELECTION, string="Mode", required=True, default="offline")
     admission_fee = fields.Float(string="Admission Fee (excl. GST)", digits=(16, 2))
     course_fee = fields.Float(string="Course Fee / Amount (excl. GST)", digits=(16, 2))
-    material_fee = fields.Float(string="Material / Add-on Fee (excl. GST)", digits=(16, 2))
+    material_fee = fields.Float(
+        string="Material Fee (excl. GST)", digits=(16, 2), default=0.0,
+        help="Study material fee. Leave 0 when there is none - it is then not shown or added.",
+    )
+    addon_fee = fields.Float(
+        string="Add-on Fee (excl. GST)", digits=(16, 2), default=0.0,
+        help="Add-on fee from the fee sheet. Leave 0 when there is none.",
+    )
     gst_percent = fields.Float(string="GST (%)", digits=(5, 2), default=18.0)
     discount_type = fields.Selection(DISCOUNT_TYPES, string="Discount Category", default="scholarship")
     discount_percent = fields.Float(
@@ -56,13 +63,13 @@ class OtmFeeStructure(models.Model):
         "A fee structure already exists for this course, type and mode.",
     )
 
-    @api.depends("course_fee", "material_fee", "gst_percent")
+    @api.depends("course_fee", "material_fee", "addon_fee", "gst_percent")
     def _compute_totals(self):
         for rec in self:
-            course = _rupee(rec.course_fee * (100.0 + rec.gst_percent) / 100.0)
-            addon = _rupee(rec.material_fee * (100.0 + rec.gst_percent) / 100.0)
+            k = (100.0 + rec.gst_percent) / 100.0
+            course = _rupee(rec.course_fee * k)
             rec.course_fee_incl = course
-            rec.total_fee = _rupee(course + addon)
+            rec.total_fee = _rupee(course + _rupee(rec.addon_fee * k) + _rupee(rec.material_fee * k))
 
     @api.depends("course_id.name", "course_type_id.name", "mode")
     def _compute_display_name(self):
@@ -78,11 +85,12 @@ class OtmFeeStructure(models.Model):
                 rec.display_name = False
 
     @api.constrains(
-        "admission_fee", "course_fee", "material_fee", "gst_percent", "discount_percent", "onetime_discount_percent"
+        "admission_fee", "course_fee", "material_fee", "addon_fee", "gst_percent", "discount_percent",
+        "onetime_discount_percent",
     )
     def _check_values(self):
         for rec in self:
-            if min(rec.admission_fee, rec.material_fee, rec.course_fee) < 0:
+            if min(rec.admission_fee, rec.material_fee, rec.addon_fee, rec.course_fee) < 0:
                 raise ValidationError(self.env._("Fees cannot be negative."))
             if not all(0 <= p <= 100 for p in (rec.gst_percent, rec.discount_percent, rec.onetime_discount_percent)):
                 raise ValidationError(self.env._("GST and discount percentages must be between 0 and 100."))
@@ -103,16 +111,18 @@ class OtmFeeStructure(models.Model):
 
         admission = part(self.admission_fee)
         course = part(self.course_fee)
-        addon = part(self.material_fee)
-        total_with_addon = _rupee(course["total"] + addon["total"])
+        addon = part(self.addon_fee)
+        material = part(self.material_fee)
+        extras = addon["total"] + material["total"]
+        total_with_addon = _rupee(course["total"] + extras)
 
         d_pct = self.discount_percent
         d_amount = min(_rupee(course["total"] * d_pct / 100.0), course["total"])
         discounted = _rupee(course["total"] - d_amount)
-        final = _rupee(discounted + addon["total"])
+        final = _rupee(discounted + extras)
 
         ot_pct = self.onetime_discount_percent
-        ot_final = _rupee(discounted * (100.0 - ot_pct) / 100.0 + addon["total"])
+        ot_final = _rupee(discounted * (100.0 - ot_pct) / 100.0 + extras)
 
         return {
             "structure_id": self.id,
@@ -123,6 +133,7 @@ class OtmFeeStructure(models.Model):
             "admission": admission,
             "course_fee": course,
             "addon": addon,
+            "material": material,
             "total_with_addon": total_with_addon,
             "discount": {
                 "type": self.discount_type or "scholarship",
@@ -131,6 +142,7 @@ class OtmFeeStructure(models.Model):
                 "discounted_fee": discounted,
             },
             "final": final,
+            "extra_fees": self.course_id.extra_ids.filtered("active").calculate_all(),
             "one_time": {
                 "percentage": ot_pct,
                 "final": ot_final,
@@ -201,7 +213,7 @@ class OtmFeeStructure(models.Model):
                 "mode": mode,
                 "admission_fee": 5000.0,
                 "course_fee": course_fee,
-                "material_fee": addon,
+                "addon_fee": addon,
                 "gst_percent": 18.0,
                 "discount_type": "scholarship",
                 "discount_percent": disc,

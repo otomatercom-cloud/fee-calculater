@@ -142,6 +142,7 @@ class OtmFeeCalculatorApi(http.Controller):
                 "course_fee": c["course_fee"]["amount"],
                 "course_incl": c["course_fee"]["total"],
                 "addon": c["addon"]["total"],
+                "material": c["material"]["total"],
                 "total_with_addon": c["total_with_addon"],
                 "discount_type": c["discount"]["type"],
                 "discount_percent": c["discount"]["percentage"],
